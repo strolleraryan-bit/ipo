@@ -1,0 +1,2129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Lot & Ledger — IPO Manager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lot & Ledger">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0b;
+    --bg-elev:#141416;
+    --bg-elev-2:#1c1c1f;
+    --border:#28282c;
+    --border-soft:#1e1e21;
+    --text:#ededec;
+    --text-dim:#8f8f95;
+    --text-faint:#5c5c62;
+    --gold:#d4a656;
+    --gold-dim:#8a7343;
+    --profit:#5fd188;
+    --loss:#f0685f;
+    --pending:#7a7a82;
+    --radius:14px;
+    --radius-sm:9px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter',sans-serif;
+    padding-bottom:78px;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums;}
+  .disp{font-family:'Space Grotesk',sans-serif;}
+  ::selection{background:var(--gold); color:#0a0a0b;}
+  a{color:inherit;}
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+
+  header.topbar{
+    position:sticky; top:0; z-index:20;
+    background:rgba(10,10,11,0.86); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-soft);
+    padding:18px 20px 14px;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand .mark{
+    width:30px; height:30px; border-radius:8px;
+    background:linear-gradient(155deg, var(--gold), var(--gold-dim));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; color:#0a0a0b; font-size:15px;
+    flex-shrink:0;
+  }
+  .brand h1{font-family:'Space Grotesk',sans-serif; font-size:17px; margin:0; font-weight:600; letter-spacing:0.2px;}
+  .brand .sub{font-size:11px; color:var(--text-faint); margin-top:1px;}
+  .page-title{font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:600; margin:2px 0 4px;}
+  .page-sub{font-size:12.5px; color:var(--text-dim); margin-bottom:0;}
+
+  main{max-width:640px; margin:0 auto; padding:18px 16px 20px;}
+
+  /* Bottom nav */
+  nav.tabbar{
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    background:rgba(15,15,17,0.92); backdrop-filter:blur(14px);
+    border-top:1px solid var(--border-soft);
+    display:flex; padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+  nav.tabbar button{
+    flex:1; background:none; border:none; color:var(--text-faint);
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:6px 2px; font-family:'Inter',sans-serif; font-size:10.5px; font-weight:500;
+    cursor:pointer; border-radius:10px; transition:color .15s;
+  }
+  nav.tabbar button.active{color:var(--gold);}
+  nav.tabbar svg{width:20px; height:20px;}
+
+  /* Cards */
+  .card{
+    background:var(--bg-elev); border:1px solid var(--border-soft);
+    border-radius:var(--radius); padding:16px; margin-bottom:12px;
+  }
+  .card-tight{padding:14px;}
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+  .stat{
+    background:var(--bg-elev); border:1px solid var(--border-soft); border-radius:var(--radius-sm);
+    padding:13px 14px;
+  }
+  .stat .label{font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px;}
+  .stat .value{font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:600; font-variant-numeric:tabular-nums;}
+  .stat .value.profit{color:var(--profit);}
+  .stat .value.loss{color:var(--loss);}
+  .stat .value.gold{color:var(--gold);}
+
+  .section-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-faint);
+    margin:20px 2px 10px; font-weight:600;
+  }
+  .section-label:first-child{margin-top:0;}
+
+  .row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .list-item{
+    background:var(--bg-elev); border:1px solid var(--border-soft); border-radius:var(--radius);
+    padding:14px 15px; margin-bottom:9px; cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .list-item:active{background:var(--bg-elev-2);}
+  .list-item .title{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:15px;}
+  .list-item .meta{font-size:11.5px; color:var(--text-dim); margin-top:3px;}
+  .list-item .right{text-align:right;}
+
+  .badge{
+    display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600;
+    padding:3px 9px; border-radius:99px; text-transform:uppercase; letter-spacing:0.4px;
+    border:1px solid var(--border);
+  }
+  .badge .dot{width:6px; height:6px; border-radius:50%;}
+  .badge.upcoming{color:#8fa3d4;} .badge.upcoming .dot{background:#8fa3d4;}
+  .badge.open{color:var(--gold);} .badge.open .dot{background:var(--gold);}
+  .badge.pending{color:var(--pending);} .badge.pending .dot{background:var(--pending);}
+  .badge.allotted{color:#7fb9e8;} .badge.allotted .dot{background:#7fb9e8;}
+  .badge.listed{color:var(--profit);} .badge.listed .dot{background:var(--profit);}
+
+  .empty{
+    text-align:center; padding:44px 20px; color:var(--text-faint);
+  }
+  .empty .icon{font-size:30px; margin-bottom:10px; opacity:0.5;}
+  .empty .msg{font-size:13px; line-height:1.5;}
+
+  /* Buttons */
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px;
+    border-radius:11px; padding:12px 18px; border:none; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    transition:transform .1s, opacity .15s; width:100%;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--gold); color:#0a0a0b;}
+  .btn-secondary{background:var(--bg-elev-2); color:var(--text); border:1px solid var(--border);}
+  .btn-ghost{background:transparent; color:var(--text-dim); border:1px solid var(--border-soft);}
+  .btn-danger{background:transparent; color:var(--loss); border:1px solid rgba(240,104,95,0.3);}
+  .btn-sm{padding:8px 12px; font-size:12.5px; width:auto;}
+  .fab{
+    position:fixed; right:18px; bottom:88px; z-index:25;
+    width:52px; height:52px; border-radius:16px; background:var(--gold); color:#0a0a0b;
+    border:none; font-size:26px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 24px rgba(212,166,86,0.28); cursor:pointer; line-height:0;
+  }
+
+  /* Forms */
+  label{display:block; font-size:11.5px; color:var(--text-dim); margin:14px 0 6px; font-weight:500;}
+  label:first-child{margin-top:0;}
+  input[type=text], input[type=number], input[type=date], select, textarea{
+    width:100%; background:var(--bg-elev-2); border:1px solid var(--border);
+    color:var(--text); border-radius:10px; padding:11px 13px; font-size:14.5px;
+    font-family:'Inter',sans-serif; outline:none;
+  }
+  input.mono, .mono-input{font-family:'JetBrains Mono',monospace;}
+  input:focus, select:focus, textarea:focus{border-color:var(--gold-dim);}
+  input[type=date]{color-scheme:dark;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .helptext{font-size:11px; color:var(--text-faint); margin-top:5px;}
+  .toggle-row{display:flex; gap:8px; margin-top:0;}
+  .toggle-btn{
+    flex:1; background:var(--bg-elev-2); border:1px solid var(--border); color:var(--text-dim);
+    border-radius:10px; padding:10px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .toggle-btn.active{background:rgba(212,166,86,0.14); border-color:var(--gold-dim); color:var(--gold);}
+  .chip-list{display:flex; flex-wrap:wrap; gap:7px; margin-top:8px;}
+  .chip{
+    background:var(--bg-elev-2); border:1px solid var(--border); border-radius:99px;
+    padding:6px 10px 6px 12px; font-size:12px; display:flex; align-items:center; gap:7px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .chip .x{cursor:pointer; color:var(--text-faint); font-size:14px;}
+  .date-add-row{display:flex; gap:8px;}
+  .date-add-row input{flex:1;}
+
+  /* Modal */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(2px);
+    z-index:50; display:flex; align-items:flex-end; justify-content:center;
+  }
+  .modal{
+    background:var(--bg-elev); border:1px solid var(--border); border-top-left-radius:20px; border-top-right-radius:20px;
+    width:100%; max-width:640px; max-height:88vh; overflow-y:auto; padding:8px 18px 22px;
+    animation:slideup .22s ease-out;
+  }
+  @keyframes slideup{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .modal-handle{width:36px; height:4px; background:var(--border); border-radius:99px; margin:10px auto 14px;}
+  .modal-title{font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:600; margin-bottom:4px;}
+  .modal-actions{display:flex; gap:10px; margin-top:20px;}
+
+  /* Tables */
+  .tbl{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .tbl th{
+    text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;
+    color:var(--text-faint); font-weight:600; padding:0 8px 8px 0; border-bottom:1px solid var(--border-soft);
+  }
+  .tbl td{padding:9px 8px 9px 0; border-bottom:1px solid var(--border-soft); vertical-align:middle;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .app-row{background:var(--bg-elev-2); border-radius:12px; padding:13px 14px; margin-bottom:9px; border:1px solid var(--border-soft);}
+  .app-row .name{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px;}
+  .app-row .grid{display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin-top:10px; font-size:12px;}
+  .app-row .grid .k{color:var(--text-faint); font-size:10.5px; text-transform:uppercase; letter-spacing:0.4px;}
+  .app-row .grid .v{font-family:'JetBrains Mono',monospace; margin-top:2px;}
+  .app-row .actions{display:flex; gap:8px; margin-top:12px;}
+
+  .divider{height:1px; background:var(--border-soft); margin:14px 0;}
+  .tab-strip{display:flex; gap:6px; margin-bottom:16px; background:var(--bg-elev); padding:4px; border-radius:12px; border:1px solid var(--border-soft);}
+  .tab-strip button{
+    flex:1; background:none; border:none; color:var(--text-dim); font-size:12.5px; font-weight:600;
+    padding:9px 4px; border-radius:9px; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .tab-strip button.active{background:var(--bg-elev-2); color:var(--gold);}
+
+  .avatar{
+    width:38px; height:38px; border-radius:10px; background:var(--bg-elev-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif;
+    font-weight:600; font-size:14px; color:var(--gold); flex-shrink:0;
+  }
+  .txn-item{display:flex; align-items:center; gap:11px; padding:11px 0; border-bottom:1px solid var(--border-soft);}
+  .txn-item:last-child{border-bottom:none;}
+  .txn-dot{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;}
+  .txn-dot.out{background:rgba(240,104,95,0.12); color:var(--loss);}
+  .txn-dot.in{background:rgba(95,209,136,0.12); color:var(--profit);}
+  .toast{
+    position:fixed; bottom:92px; left:50%; transform:translateX(-50%); z-index:60;
+    background:var(--bg-elev-2); border:1px solid var(--border); color:var(--text); font-size:12.5px;
+    padding:10px 16px; border-radius:99px; opacity:0; transition:opacity .25s; pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+  .install-note{font-size:11px; color:var(--text-faint); line-height:1.5; padding:12px 14px; background:var(--bg-elev); border:1px dashed var(--border); border-radius:12px;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="mark">L</div>
+    <div>
+      <h1>Lot &amp; Ledger</h1>
+      <div class="sub" id="headerSub">IPO applications, allotments &amp; settlements</div>
+    </div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<button class="fab" id="fab" style="display:none;">+</button>
+
+<nav class="tabbar">
+  <button data-tab="dashboard" class="tab-btn active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l2-2 4 4 8-8 4 4"/><path d="M3 20h18" stroke-opacity="0.4"/></svg>
+    Dashboard
+  </button>
+  <button data-tab="ipos" class="tab-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v0"/></svg>
+    IPOs
+  </button>
+  <button data-tab="users" class="tab-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 8.5a3 3 0 110 5.9M21.5 20c0-2.9-1.9-5.1-4.5-5.8"/></svg>
+    Users
+  </button>
+  <button data-tab="reports" class="tab-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
+    Reports
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="importFileInput" accept="application/json" style="display:none;">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+/* ============================= STATE ============================= */
+let state = { users: [], ipos: [], applications: [], transactions: [] };
+let ready = false;
+let activeTab = 'dashboard';
+let ipoDetailId = null;
+let userDetailId = null;
+let ipoDetailSubTab = 'apps';
+let ipoSearchQuery = '';
+let ipoStatusFilter = 'active';
+let userSearchQuery = '';
+let editingTxnId = null;
+
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmtMoney = n => {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const neg = n < 0; n = Math.abs(n);
+  const s = n.toLocaleString('en-IN', {maximumFractionDigits:0});
+  return (neg?'-':'') + '₹' + s;
+};
+const fmtDate = iso => { if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); };
+const fmtDateShort = iso => { if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}); };
+const clamp0 = n => Math.max(0, n||0);
+
+/* ============================= STORAGE ============================= */
+async function loadState(){
+  try{
+    const res = await window.storage.get('app-state', false);
+    if(res && res.value){ state = JSON.parse(res.value); }
+  }catch(e){ /* no data yet */ }
+  if(!state.users.some(u=>u.isMe)){
+    state.users.unshift({id:uid(), name:'Me', isMe:true, defaultCommission:25, openingBalance:0});
+  }
+  state.users.forEach(u=>{ if(u.openingBalance==null) u.openingBalance = 0; });
+  // Migrate old transaction schema {userId, type:'given'|'received'} to {fromUserId, toUserId}
+  const me = state.users.find(u=>u.isMe);
+  state.transactions = (state.transactions||[]).map(t=>{
+    if(t.fromUserId!=null && t.toUserId!=null) return t;
+    if(t.type==='given') return {id:t.id, date:t.date, note:t.note, amount:t.amount, fromUserId: me?me.id:null, toUserId:t.userId};
+    if(t.type==='received') return {id:t.id, date:t.date, note:t.note, amount:t.amount, fromUserId:t.userId, toUserId: me?me.id:null};
+    return t;
+  }).filter(t=>t.fromUserId && t.toUserId);
+  ready = true;
+  render();
+}
+let saveTimer=null;
+function saveState(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    try{ await window.storage.set('app-state', JSON.stringify(state), false); }
+    catch(e){ showToast('Save failed — changes kept locally this session'); }
+  }, 120);
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function exportData(){
+  try{
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lot-and-ledger-backup-${todayISO()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    showToast('Backup downloaded');
+  }catch(e){ showToast('Export failed'); }
+}
+document.getElementById('importFileInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    if(!parsed || !Array.isArray(parsed.users) || !Array.isArray(parsed.ipos)){
+      showToast('Not a valid backup file'); return;
+    }
+    if(!confirm('Import this backup? It will replace all current data in the app.')) return;
+    state = {
+      users: parsed.users||[], ipos: parsed.ipos||[],
+      applications: parsed.applications||[], transactions: parsed.transactions||[]
+    };
+    if(!state.users.some(u=>u.isMe)) state.users.unshift({id:uid(), name:'Me', isMe:true, defaultCommission:25});
+    saveState(); render(); showToast('Backup imported');
+  }catch(err){ showToast('Could not read that file'); }
+});
+
+/* ============================= CALCULATIONS ============================= */
+function ipoStatus(ipo){
+  const t = todayISO();
+  const dates = (ipo.biddingDates||[]).slice().sort();
+  if(dates.length){
+    if(t < dates[0]) return 'upcoming';
+    if(t <= dates[dates.length-1]) return 'open';
+  }
+  if(ipo.allotmentDate && t < ipo.allotmentDate) return 'pending';
+  if(ipo.listingDate && t < ipo.listingDate) return 'allotted';
+  if(ipo.listingDate && t >= ipo.listingDate) return 'listed';
+  return 'pending';
+}
+const STATUS_LABEL = {upcoming:'Upcoming', open:'Bidding Open', pending:'Allotment Pending', allotted:'Allotted · Awaiting Listing', listed:'Listed'};
+
+function totalCost(app, ipo){ return (app.lots||0) * (ipo.lotSize||0) * (ipo.pricePerShare||0); }
+
+// Expected profit per share/lot based on GMP (Grey Market Premium) entered manually for the IPO.
+// This is a projection only, distinct from computeApp()'s actual realized profit after sale.
+function expectedProfitPerShare(ipo){ return ipo.gmp!=null ? ipo.gmp : null; }
+function expectedProfitPerLot(ipo){ const gmp = expectedProfitPerShare(ipo); return gmp!=null ? gmp*(ipo.lotSize||0) : null; }
+function expectedProfitForApp(app, ipo){
+  const gmp = expectedProfitPerShare(ipo);
+  if(gmp==null) return null;
+  const lots = (app.lotsAllotted!=null? app.lotsAllotted : app.lots) || 0;
+  return gmp * lots * (ipo.lotSize||0);
+}
+function expectedProfitForIpo(ipo){
+  const gmp = expectedProfitPerShare(ipo);
+  if(gmp==null) return null;
+  const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+  return apps.reduce((sum,a)=> sum + (expectedProfitForApp(a, ipo)||0), 0);
+}
+function lastApplyDate(ipo){
+  const dates = (ipo.biddingDates||[]).slice().sort();
+  return dates.length ? dates[dates.length-1] : null;
+}
+
+// Determine funding source: 'me' (100% my fund), 'shared' (both), 'own' (100% user's own fund, I have zero stake)
+function fundingSourceOf(app, ipo){
+  if(app.fundingSource) return app.fundingSource;
+  // Backward-compat inference for records saved before fundingSource existed
+  const cost = totalCost(app, ipo);
+  const funded = app.fundedByMe||0;
+  if(funded <= 0.0001) return 'own';
+  if(funded >= cost - 0.0001) return 'me';
+  return 'shared';
+}
+
+// Full settlement computation for a single application
+function computeApp(app, ipo, user){
+  const fullCost = totalCost(app, ipo);
+  const isMe = user && user.isMe;
+  const source = isMe ? 'me' : fundingSourceOf(app, ipo);
+  const out = {
+    fullCost, isMe, fundingSource: source,
+    status: 'pending', // pending | refunded | holding | settled
+    X: 0, nEff: 0, sEff: 0, unallottedRefund: 0,
+    proceeds: null, profit: null, commission: 0, myProfitShare: null, friendShare: null,
+    owedToMe: 0
+  };
+  if(app.allotted === false){
+    out.status = 'refunded';
+    out.X = 0; out.unallottedRefund = app.fundedByMe||0;
+    out.owedToMe = isMe ? 0 : (app.fundedByMe||0);
+    return out;
+  }
+  if(app.allotted !== true){
+    out.status = 'pending';
+    return out;
+  }
+  // allotted
+  const lotsAllotted = (app.lotsAllotted!=null? app.lotsAllotted : app.lots) || 0;
+  const X = lotsAllotted * (ipo.lotSize||0) * (ipo.pricePerShare||0);
+  out.X = X;
+  const funded = app.fundedByMe||0;
+  const nEff = Math.min(funded, X);
+  const sEff = clamp0(X - nEff);
+  out.nEff = nEff; out.sEff = sEff;
+  out.unallottedRefund = clamp0(funded - nEff);
+
+  if(app.sellPrice === null || app.sellPrice === undefined || app.sellPrice === ''){
+    out.status = 'holding';
+    out.owedToMe = isMe ? 0 : (source==='own' ? 0 : out.unallottedRefund); // unallotted portion already refundable
+    return out;
+  }
+  // sold
+  out.status = 'settled';
+  const proceeds = lotsAllotted * (ipo.lotSize||0) * app.sellPrice;
+  const profit = proceeds - X;
+  out.proceeds = proceeds; out.profit = profit;
+
+  if(isMe){
+    out.myProfitShare = profit;
+    out.owedToMe = 0;
+    return out;
+  }
+
+  if(source==='own'){
+    // 100% user's own fund -> I have no money in it, no commission, no profit share
+    out.myProfitShare = 0;
+    out.friendShare = profit;
+    out.commission = 0;
+    out.owedToMe = 0;
+    return out;
+  } else if(source==='me'){
+    // fully funded by me -> commission model, only on positive profit
+    const commPct = (app.commissionPercent!=null? app.commissionPercent : (user.defaultCommission||0));
+    const commission = profit > 0 ? profit * (commPct/100) : 0;
+    out.commission = commission;
+    out.myProfitShare = profit - commission;
+    out.friendShare = commission;
+  } else {
+    // shared fund -> profit split by investment ratio, no commission
+    const myShare = X>0 ? profit * (nEff/X) : 0;
+    const friendShare = X>0 ? profit * (sEff/X) : 0;
+    out.myProfitShare = myShare;
+    out.friendShare = friendShare;
+    out.commission = 0;
+  }
+  out.owedToMe = out.unallottedRefund + nEff + out.myProfitShare;
+  return out;
+}
+
+function transfersWithMe(userId){
+  const me = state.users.find(u=>u.isMe);
+  let given=0, received=0;
+  if(!me) return {given, received};
+  state.transactions.forEach(t=>{
+    if(t.fromUserId===me.id && t.toUserId===userId) given += t.amount;
+    if(t.fromUserId===userId && t.toUserId===me.id) received += t.amount;
+  });
+  return {given, received};
+}
+
+function userBalance(userId){
+  const user = state.users.find(u=>u.id===userId);
+  if(!user || user.isMe) return {owed:0, given:0, received:0, net:0, opening:0};
+  let owed = 0;
+  state.applications.filter(a=>a.userId===userId).forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const c = computeApp(a, ipo, user);
+    if(c.status==='refunded' || c.status==='settled') owed += c.owedToMe;
+  });
+  const {given, received} = transfersWithMe(userId);
+  const opening = user.openingBalance||0;
+  const net = opening + owed + given - received; // positive => they owe me
+  return {owed, given, received, net, opening};
+}
+
+function myTotals(){
+  let deployed = 0, profitMine = 0, commissionEarnedByFriends = 0, outstanding = 0;
+  state.applications.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const user = state.users.find(u=>u.id===a.userId); if(!user) return;
+    const c = computeApp(a, ipo, user);
+    if(c.status==='holding' || c.status==='pending') deployed += (a.fundedByMe||0);
+    if(user.isMe && c.status==='settled') profitMine += (c.profit||0);
+    if(!user.isMe && c.status==='settled'){ profitMine += (c.myProfitShare||0); commissionEarnedByFriends += (c.commission||0); }
+  });
+  state.users.filter(u=>!u.isMe).forEach(u=>{ outstanding += userBalance(u.id).net; });
+
+  // IPO-level counts
+  const activeIpos = state.ipos.filter(i=>!i.archived);
+  const totalIpos = state.ipos.length;
+  const allottedIpos = state.ipos.filter(i=>{
+    const apps = state.applications.filter(a=>a.ipoId===i.id);
+    return apps.length>0 && apps.some(a=>a.allotted===true);
+  }).length;
+
+  // Fund given / returned — from the funding & repayment (money transfer) ledger, Me -> Users vs Users -> Me
+  const me = state.users.find(u=>u.isMe);
+  let fundGiven = 0, fundReturned = 0;
+  if(me){
+    state.transactions.forEach(t=>{
+      if(t.fromUserId===me.id && t.toUserId!==me.id) fundGiven += t.amount;
+      if(t.toUserId===me.id && t.fromUserId!==me.id) fundReturned += t.amount;
+    });
+  }
+
+  return {deployed, profitMine, commissionEarnedByFriends, outstanding,
+    totalIpos, activeIpos: activeIpos.length, allottedIpos, fundGiven, fundReturned};
+}
+
+// My Account = my opening balance + my total profit earned (own IPOs + share from friends')
+function myAccountBalance(){
+  const me = state.users.find(u=>u.isMe);
+  const opening = me? (me.openingBalance||0) : 0;
+  return opening + myTotals().profitMine;
+}
+
+// Total value sitting in friends' accounts = opening balance + fund I've given them (historical) + their own earned profit/commission
+function totalInOthersAccounts(){
+  let total = 0;
+  state.users.filter(u=>!u.isMe).forEach(u=>{
+    let fundGiven = 0, theirProfit = 0;
+    state.applications.filter(a=>a.userId===u.id).forEach(a=>{
+      const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+      fundGiven += a.fundedByMe||0; // 0 for 'own' fund apps automatically
+      const c = computeApp(a, ipo, u);
+      if(c.status==='settled') theirProfit += (c.friendShare||0);
+    });
+    total += (u.openingBalance||0) + fundGiven + theirProfit;
+  });
+  return total;
+}
+
+/* ============================= RENDER ROOT ============================= */
+function render(){
+  if(!ready) { document.getElementById('main').innerHTML = `<div class="empty"><div class="icon">⋯</div><div class="msg">Loading your ledger…</div></div>`; return; }
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===activeTab));
+  const fab = document.getElementById('fab');
+  const sub = document.getElementById('headerSub');
+  let html = '';
+  if(activeTab==='dashboard'){ fab.style.display='none'; sub.textContent='Overview'; html = renderDashboard(); }
+  else if(activeTab==='ipos'){
+    if(ipoDetailId){ fab.style.display='none'; sub.textContent='IPO detail'; html = renderIpoDetail(); }
+    else { fab.style.display='flex'; fab.onclick=()=>openIpoModal(); sub.textContent='All IPOs'; html = renderIposList(); }
+  }
+  else if(activeTab==='users'){
+    if(userDetailId){ fab.style.display='none'; sub.textContent='User detail'; html = renderUserDetail(); }
+    else { fab.style.display='flex'; fab.onclick=()=>openUserModal(); sub.textContent='Applicants & accounts'; html = renderUsersList(); }
+  }
+  else if(activeTab==='reports'){ fab.style.display='none'; sub.textContent='Reports'; html = renderReports(); }
+  document.getElementById('main').innerHTML = html;
+}
+
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    activeTab = b.dataset.tab; ipoDetailId=null; userDetailId=null; render();
+    window.scrollTo(0,0);
+  });
+});
+
+/* ============================= DASHBOARD ============================= */
+function renderDashboard(){
+  const t = myTotals();
+  const myAccount = myAccountBalance();
+  const othersTotal = totalInOthersAccounts();
+  const upcoming = state.ipos.slice().map(i=>({i, d: nextKeyDate(i)})).filter(x=>x.d).sort((a,b)=>a.d.date.localeCompare(b.d.date)).slice(0,5);
+  const watch = state.ipos.filter(i=>['upcoming','open','pending','allotted'].includes(ipoStatus(i)));
+
+  return `
+    <div class="section-label" style="margin-top:0;">Overview</div>
+    <div class="stat-grid">
+      <div class="stat"><div class="label">Total IPOs</div><div class="value">${t.totalIpos}</div></div>
+      <div class="stat"><div class="label">Active IPOs</div><div class="value">${t.activeIpos}</div></div>
+      <div class="stat"><div class="label">Allotted IPOs</div><div class="value">${t.allottedIpos}</div></div>
+      <div class="stat"><div class="label">Pending Repayments</div><div class="value ${t.outstanding>=0?'gold':'loss'}">${fmtMoney(t.outstanding)}</div></div>
+    </div>
+
+    <div class="section-label">Money</div>
+    <div class="stat-grid">
+      <div class="stat"><div class="label">My Account</div><div class="value ${myAccount>=0?'gold':'loss'}">${fmtMoney(myAccount)}</div></div>
+      <div class="stat"><div class="label">Total in Others' Accounts</div><div class="value gold">${fmtMoney(othersTotal)}</div></div>
+      <div class="stat"><div class="label">Capital Deployed</div><div class="value gold">${fmtMoney(t.deployed)}</div></div>
+      <div class="stat"><div class="label">My Total Profit</div><div class="value ${t.profitMine>=0?'profit':'loss'}">${fmtMoney(t.profitMine)}</div></div>
+      <div class="stat"><div class="label">Total Fund Given</div><div class="value">${fmtMoney(t.fundGiven)}</div></div>
+      <div class="stat"><div class="label">Total Fund Returned</div><div class="value">${fmtMoney(t.fundReturned)}</div></div>
+      <div class="stat"><div class="label">Commission Paid Out</div><div class="value">${fmtMoney(t.commissionEarnedByFriends)}</div></div>
+    </div>
+    <div class="helptext" style="margin:-6px 2px 16px;">My Account = your opening balance + total profit earned. Total in Others' Accounts = opening balances + funds you've given + friends' own profit share. Fund Given/Returned track logged money transfers between you and users.</div>
+
+    <div class="section-label">Individual User Profit</div>
+    ${(()=>{
+      const friends = state.users.filter(u=>!u.isMe);
+      if(!friends.length) return emptyBlock('No users yet', 'Add users from the Users tab.');
+      return friends.map(u=>{
+        let userProfit = 0;
+        state.applications.filter(a=>a.userId===u.id).forEach(a=>{
+          const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+          const c = computeApp(a, ipo, u);
+          if(c.status==='settled') userProfit += (c.friendShare||0);
+        });
+        return `<div class="list-item" onclick="openUser('${u.id}')">
+          <div class="row">
+            <div class="title">${esc(u.name)}</div>
+            <div class="right mono" style="font-weight:600; color:${userProfit>=0?'var(--profit)':'var(--loss)'}">${fmtMoney(userProfit)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    })()}
+
+    <div class="section-label">Upcoming Dates</div>
+    ${upcoming.length? upcoming.map(x=>`
+      <div class="list-item" onclick="openIpo('${x.i.id}')">
+        <div class="row">
+          <div>
+            <div class="title">${esc(x.i.name)}</div>
+            <div class="meta">${x.d.label} · ${fmtDate(x.d.date)}</div>
+          </div>
+          <div class="right">${statusBadge(x.i)}</div>
+        </div>
+      </div>`).join('') : emptyBlock('No IPOs yet', 'Add your first IPO from the IPOs tab.')}
+
+    <div class="section-label">GMP Watch</div>
+    ${watch.length? watch.map(i=>{
+      const gain = i.pricePerShare? ((i.gmp||0)/i.pricePerShare*100) : 0;
+      return `<div class="list-item" onclick="openIpo('${i.id}')">
+        <div class="row">
+          <div>
+            <div class="title">${esc(i.name)}</div>
+            <div class="meta">Price ${fmtMoney(i.pricePerShare)} · Lot ${i.lotSize||0}</div>
+          </div>
+          <div class="right">
+            <div class="mono" style="font-weight:600; color:${i.gmp>=0?'var(--profit)':'var(--loss)'}">${i.gmp>=0?'+':''}${fmtMoney(i.gmp)} GMP</div>
+            <div class="meta">${gain>=0?'+':''}${gain.toFixed(1)}% exp.</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('') : emptyBlock('Nothing to watch', 'IPOs awaiting listing will show GMP here.')}
+
+    <div class="section-label">Backup</div>
+    <div class="card card-tight" style="border-color:var(--gold-dim);">
+      <div class="helptext" style="margin:0 0 14px; color:var(--text-dim);">Your data lives in this app's storage only. Export a backup regularly, especially before clearing browser data.</div>
+      <button class="btn btn-primary" style="margin-bottom:9px;" onclick="exportData()">⬇ Export Backup</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('importFileInput').click()">⬆ Import Backup</button>
+    </div>
+  `;
+}
+function nextKeyDate(ipo){
+  const t = todayISO();
+  const candidates = [];
+  (ipo.biddingDates||[]).forEach(d=>{ if(d>=t) candidates.push({date:d, label:'Bidding'}); });
+  if(ipo.allotmentDate && ipo.allotmentDate>=t) candidates.push({date:ipo.allotmentDate, label:'Allotment'});
+  if(ipo.listingDate && ipo.listingDate>=t) candidates.push({date:ipo.listingDate, label:'Listing'});
+  candidates.sort((a,b)=>a.date.localeCompare(b.date));
+  return candidates[0];
+}
+function statusBadge(ipo){
+  if(ipo.archived) return `<span class="badge pending"><span class="dot"></span>Archived</span>`;
+  const s = ipoStatus(ipo);
+  let extra = '';
+  if(s==='open'){
+    const dates = (ipo.biddingDates||[]).slice().sort();
+    const last = dates[dates.length-1];
+    if(last){
+      const days = Math.round((new Date(last+'T00:00:00') - new Date(todayISO()+'T00:00:00'))/86400000);
+      if(days===0) extra = ' · Closes today';
+      else if(days>0) extra = ` · ${days}d left`;
+    }
+  }
+  return `<span class="badge ${s}"><span class="dot"></span>${STATUS_LABEL[s]}${extra}</span>`;
+}
+function emptyBlock(title, msg){
+  return `<div class="empty"><div class="icon">◇</div><div class="msg"><strong style="color:var(--text-dim)">${title}</strong><br>${msg}</div></div>`;
+}
+function esc(s){ return (s||'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ============================= IPOS LIST ============================= */
+const IPO_FILTERS = [
+  {key:'active', label:'Active'},
+  {key:'all', label:'All'},
+  {key:'open', label:'Open'},
+  {key:'pending', label:'Pending'},
+  {key:'listed', label:'Listed'},
+  {key:'archived', label:'Archived'}
+];
+function renderIposList(){
+  if(!state.ipos.length) return emptyBlock('No IPOs added', 'Tap the + button to add your first IPO — set price, lot size, and key dates.');
+
+  let list = state.ipos.slice();
+  if(ipoStatusFilter==='active') list = list.filter(i=>!i.archived);
+  else if(ipoStatusFilter==='archived') list = list.filter(i=>i.archived);
+  else if(ipoStatusFilter!=='all') list = list.filter(i=>!i.archived && ipoStatus(i)===ipoStatusFilter);
+
+  if(ipoSearchQuery.trim()){
+    const q = ipoSearchQuery.trim().toLowerCase();
+    list = list.filter(i=>i.name.toLowerCase().includes(q));
+  }
+  list.sort((a,b)=> (b.biddingDates?.[0]||'').localeCompare(a.biddingDates?.[0]||''));
+
+  const chips = `<div class="chip-list" style="margin:0 0 12px;">
+    ${IPO_FILTERS.map(f=>`<span class="chip" style="cursor:pointer; ${ipoStatusFilter===f.key?'border-color:var(--gold-dim); color:var(--gold);':''}" onclick="ipoStatusFilter='${f.key}'; render();">${f.label}</span>`).join('')}
+  </div>`;
+  const search = `<input type="text" placeholder="Search IPOs…" value="${esc(ipoSearchQuery)}" style="margin-bottom:12px;" oninput="ipoSearchQuery=this.value; renderIpoListOnly();">`;
+
+  const body = list.length ? list.map(i=>{
+    const apps = state.applications.filter(a=>a.ipoId===i.id);
+    return `<div class="list-item" onclick="openIpo('${i.id}')">
+      <div class="row">
+        <div>
+          <div class="title">${esc(i.name)}</div>
+          <div class="meta">${fmtMoney(i.pricePerShare)}/share · Lot ${i.lotSize||0} · ${apps.length} applicant${apps.length!==1?'s':''}</div>
+        </div>
+        <div class="right">${statusBadge(i)}</div>
+      </div>
+    </div>`;
+  }).join('') : emptyBlock('No matches', 'Try a different search or filter.');
+
+  return `${search}${chips}<div id="ipoListBody">${body}</div>`;
+}
+function renderIpoListOnly(){
+  // lightweight re-render that preserves focus in the search input
+  const list0 = document.getElementById('ipoListBody');
+  if(!list0) return render();
+  let list = state.ipos.slice();
+  if(ipoStatusFilter==='active') list = list.filter(i=>!i.archived);
+  else if(ipoStatusFilter==='archived') list = list.filter(i=>i.archived);
+  else if(ipoStatusFilter!=='all') list = list.filter(i=>!i.archived && ipoStatus(i)===ipoStatusFilter);
+  if(ipoSearchQuery.trim()){
+    const q = ipoSearchQuery.trim().toLowerCase();
+    list = list.filter(i=>i.name.toLowerCase().includes(q));
+  }
+  list.sort((a,b)=> (b.biddingDates?.[0]||'').localeCompare(a.biddingDates?.[0]||''));
+  list0.innerHTML = list.length ? list.map(i=>{
+    const apps = state.applications.filter(a=>a.ipoId===i.id);
+    return `<div class="list-item" onclick="openIpo('${i.id}')">
+      <div class="row">
+        <div>
+          <div class="title">${esc(i.name)}</div>
+          <div class="meta">${fmtMoney(i.pricePerShare)}/share · Lot ${i.lotSize||0} · ${apps.length} applicant${apps.length!==1?'s':''}</div>
+        </div>
+        <div class="right">${statusBadge(i)}</div>
+      </div>
+    </div>`;
+  }).join('') : emptyBlock('No matches', 'Try a different search or filter.');
+}
+
+/* ============================= IPO DETAIL ============================= */
+function openIpo(id){ activeTab='ipos'; ipoDetailId=id; ipoDetailSubTab='apps'; render(); window.scrollTo(0,0); }
+function renderIpoDetail(){
+  const ipo = state.ipos.find(i=>i.id===ipoDetailId);
+  if(!ipo){ ipoDetailId=null; return renderIposList(); }
+  const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+  const isListingDay = ipo.listingDate && todayISO() >= ipo.listingDate;
+  const isAllotmentDay = ipo.allotmentDate && todayISO() >= ipo.allotmentDate;
+
+  let totalProfit=0, totalCommission=0;
+  apps.forEach(a=>{ const u=state.users.find(x=>x.id===a.userId); if(!u) return; const c=computeApp(a,ipo,u); if(c.status==='settled'){ totalProfit += u.isMe? (c.profit||0) : (c.myProfitShare||0); totalCommission += c.commission||0; } });
+
+  return `
+    <button class="btn-ghost btn btn-sm" style="width:auto; margin-bottom:14px;" onclick="ipoDetailId=null; render();">← All IPOs</button>
+    <div class="card">
+      <div class="row" style="align-items:flex-start;">
+        <div>
+          <div class="page-title" style="font-size:19px; margin-bottom:6px;">${esc(ipo.name)}</div>
+          ${statusBadge(ipo)}
+        </div>
+        <button class="btn-ghost btn btn-sm" onclick="openIpoModal('${ipo.id}')">Edit</button>
+      </div>
+      <div class="divider"></div>
+      <div class="stat-grid" style="margin-bottom:0;">
+        <div class="stat"><div class="label">Price / Share</div><div class="value">${fmtMoney(ipo.pricePerShare)}</div></div>
+        <div class="stat"><div class="label">Lot Size</div><div class="value">${ipo.lotSize||0}</div></div>
+        <div class="stat"><div class="label">Cost / Lot</div><div class="value">${fmtMoney((ipo.lotSize||0)*(ipo.pricePerShare||0))}</div></div>
+        <div class="stat"><div class="label">Current GMP</div><div class="value ${(ipo.gmp||0)>=0?'profit':'loss'}">${ipo.gmp!=null?((ipo.gmp>=0?'+':'')+fmtMoney(ipo.gmp)):'—'}</div></div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <label style="margin:0; flex-shrink:0; white-space:nowrap;">Update GMP (₹/share)</label>
+        <input type="number" class="mono" id="gmpQuickInput" value="${ipo.gmp!=null?ipo.gmp:''}" placeholder="0" style="margin:0; flex:1; padding:8px 11px; font-size:13.5px;">
+        <button class="btn btn-secondary btn-sm" style="white-space:nowrap;" onclick="saveQuickGmp('${ipo.id}')">Save GMP</button>
+      </div>
+      <div class="divider"></div>
+      <div class="app-row" style="margin:0; background:transparent; border:none; padding:0;">
+        <div class="grid" style="margin-top:0;">
+          <div><div class="k">Bidding Dates</div><div class="v" style="font-size:12px;">${(ipo.biddingDates||[]).length? ipo.biddingDates.slice().sort().map(fmtDateShort).join(', ') : '—'}</div></div>
+          <div><div class="k">Allotment Date</div><div class="v">${fmtDate(ipo.allotmentDate)}</div></div>
+          <div><div class="k">Listing Date</div><div class="v">${fmtDate(ipo.listingDate)}</div></div>
+          <div><div class="k">Listing Price</div><div class="v ${ipo.listingPrice? (ipo.listingPrice>=ipo.pricePerShare?'':''):''}">${ipo.listingPrice!=null? fmtMoney(ipo.listingPrice): (isListingDay? 'Not set yet' : '—')}</div></div>
+        </div>
+      </div>
+      ${ipo.notes? `<div class="divider"></div><div><div class="k" style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">Notes</div><div style="font-size:13px; color:var(--text-dim);">${esc(ipo.notes)}</div></div>` : ''}
+      ${isListingDay ? `<div class="divider"></div><button class="btn btn-secondary btn-sm" style="width:100%;" onclick="promptListingPrice('${ipo.id}')">${ipo.listingPrice!=null?'Update':'Add'} Listing Price</button>` : ''}
+      <div class="divider"></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="exportIpoDetailsImage('${ipo.id}')">📷 Download as Image</button>
+    </div>
+
+    <div class="tab-strip">
+      <button class="${ipoDetailSubTab==='apps'?'active':''}" onclick="ipoDetailSubTab='apps'; render();">Applications</button>
+      <button class="${ipoDetailSubTab==='summary'?'active':''}" onclick="ipoDetailSubTab='summary'; render();">Summary</button>
+    </div>
+
+    ${ipoDetailSubTab==='apps' ? renderIpoApps(ipo, apps, isAllotmentDay, isListingDay) : renderIpoSummary(ipo, apps, totalProfit, totalCommission)}
+
+    <button class="btn btn-primary" style="margin-top:6px;" onclick="openAppModal(null, '${ipo.id}')">+ Add Applicant</button>
+    <button class="btn btn-ghost" style="margin-top:9px;" onclick="toggleArchiveIpo('${ipo.id}')">${ipo.archived? 'Unarchive IPO' : 'Archive IPO (fully settled)'}</button>
+  `;
+}
+function toggleArchiveIpo(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo) return;
+  ipo.archived = !ipo.archived;
+  saveState(); render(); showToast(ipo.archived? 'IPO archived' : 'IPO unarchived');
+}
+
+function renderIpoApps(ipo, apps, isAllotmentDay, isListingDay){
+  if(!apps.length) return emptyBlock('No applicants yet', 'Add yourself or a friend as an applicant for this IPO.');
+  return apps.map(a=>{
+    const user = state.users.find(u=>u.id===a.userId);
+    if(!user) return '';
+    const c = computeApp(a, ipo, user);
+    const cost = totalCost(a, ipo);
+    let statusChip = '';
+    if(a.allotted===false) statusChip = `<span class="badge pending"><span class="dot"></span>Not Allotted</span>`;
+    else if(a.allotted===true && c.status==='holding') statusChip = `<span class="badge allotted"><span class="dot"></span>Allotted · Holding</span>`;
+    else if(c.status==='settled') statusChip = `<span class="badge listed"><span class="dot"></span>Sold</span>`;
+    else statusChip = `<span class="badge upcoming"><span class="dot"></span>Awaiting Result</span>`;
+
+    const srcLabel = {me:'100% My Fund', shared:'Shared Fund', own:"User's Own Fund"}[c.fundingSource] || '';
+    return `<div class="app-row">
+      <div class="row">
+        <div class="row" style="gap:9px;">
+          <div class="avatar">${initials(user.name)}</div>
+          <div>
+            <div class="name">${esc(user.name)}${user.isMe?' (You)':''}</div>
+            <div class="meta">${a.lots} lot${a.lots!==1?'s':''} · ${fmtMoney(cost)}${!user.isMe? ' · '+srcLabel : ''}</div>
+          </div>
+        </div>
+        ${statusChip}
+      </div>
+      <div class="grid">
+        <div><div class="k">Applied Amount</div><div class="v">${fmtMoney(cost)}</div></div>
+        <div><div class="k">My Investment</div><div class="v">${fmtMoney(a.fundedByMe||0)}</div></div>
+        <div><div class="k">User Investment</div><div class="v">${fmtMoney(clamp0(cost-(a.fundedByMe||0)))}</div></div>
+        ${!user.isMe && c.fundingSource==='me' && a.allotted ? `<div><div class="k">Commission</div><div class="v">${a.commissionPercent!=null?a.commissionPercent:user.defaultCommission}%</div></div>` : ''}
+        ${c.status==='settled' ? `<div><div class="k">Selling Price</div><div class="v">${fmtMoney(a.sellPrice)}</div></div>` : ''}
+        ${c.status==='settled' ? `<div><div class="k">Sale Amount</div><div class="v">${fmtMoney(c.proceeds)}</div></div>` : ''}
+        ${c.status==='settled' ? `<div><div class="k">Profit / Loss</div><div class="v ${c.profit>=0?'profit':'loss'}">${fmtMoney(c.profit)}</div></div>` : ''}
+        ${c.status==='settled' && !user.isMe && c.fundingSource!=='own' ? `<div><div class="k">Owed to Me</div><div class="v gold">${fmtMoney(c.owedToMe)}</div></div>` : ''}
+        ${c.status==='refunded' && !user.isMe && c.fundingSource!=='own' ? `<div><div class="k">Owed to Me</div><div class="v gold">${fmtMoney(c.owedToMe)}</div></div>` : ''}
+      </div>
+      <div class="actions">
+        ${a.allotted==null ? `
+          <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="setAllotment('${a.id}', true)">Mark Allotted</button>
+          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="setAllotment('${a.id}', false)">Not Allotted</button>
+        ` : ''}
+        ${a.allotted===true && c.status==='holding' && isListingDay ? `<button class="btn btn-primary btn-sm" style="flex:1;" onclick="promptSellPrice('${a.id}')">Enter Sell Price</button>` : ''}
+        ${a.allotted===true && c.status==='holding' && !isListingDay ? `<span class="meta" style="align-self:center;">Sell available on listing day</span>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="openAppModal('${a.id}', '${ipo.id}')">Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteApp('${a.id}')">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderIpoSummary(ipo, apps, totalProfit, totalCommission){
+  const allotted = apps.filter(a=>a.allotted===true).length;
+  const notAllotted = apps.filter(a=>a.allotted===false).length;
+  const pending = apps.filter(a=>a.allotted==null).length;
+  // Only count capital still deployed (not yet refunded from a rejected application)
+  const totalDeployed = apps.filter(a=>a.allotted!==false).reduce((s,a)=>s+(a.fundedByMe||0),0);
+  return `
+    <div class="stat-grid">
+      <div class="stat"><div class="label">Allotted</div><div class="value">${allotted}</div></div>
+      <div class="stat"><div class="label">Not Allotted</div><div class="value">${notAllotted}</div></div>
+      <div class="stat"><div class="label">Awaiting Result</div><div class="value">${pending}</div></div>
+      <div class="stat"><div class="label">Capital I Put In</div><div class="value gold">${fmtMoney(totalDeployed)}</div></div>
+      <div class="stat"><div class="label">Total Profit (Mine)</div><div class="value ${totalProfit>=0?'profit':'loss'}">${fmtMoney(totalProfit)}</div></div>
+      <div class="stat"><div class="label">Commission Paid</div><div class="value">${fmtMoney(totalCommission)}</div></div>
+    </div>
+  `;
+}
+function initials(name){ return (name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+function setAllotment(appId, allotted){
+  const a = state.applications.find(x=>x.id===appId); if(!a) return;
+  a.allotted = allotted;
+  if(allotted && a.lotsAllotted==null) a.lotsAllotted = a.lots;
+  if(!allotted){ a.lotsAllotted=null; a.sellPrice=null; }
+  saveState(); render();
+  showToast(allotted? 'Marked as allotted' : 'Marked as not allotted');
+}
+function promptSellPrice(appId){
+  const a = state.applications.find(x=>x.id===appId); const ipo = state.ipos.find(i=>i.id===a.ipoId);
+  openSellModal(appId, ipo);
+}
+function promptListingPrice(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId);
+  openListingPriceModal(ipo);
+}
+function deleteApp(appId){
+  if(!confirm('Remove this applicant from the IPO? This cannot be undone.')) return;
+  state.applications = state.applications.filter(a=>a.id!==appId);
+  saveState(); render(); showToast('Applicant removed');
+}
+
+/* ============================= USERS LIST ============================= */
+function buildUserListHtml(){
+  let users = state.users.slice().sort((a,b)=> (b.isMe?1:0)-(a.isMe?1:0));
+  if(userSearchQuery.trim()){
+    const q = userSearchQuery.trim().toLowerCase();
+    users = users.filter(u=>u.name.toLowerCase().includes(q));
+  }
+  return users.length? users.map(u=>{
+    const apps = state.applications.filter(a=>a.userId===u.id);
+    let balHtml = '';
+    if(!u.isMe){
+      const bal = userBalance(u.id);
+      balHtml = `<div class="mono" style="font-weight:600; color:${bal.net>0?'var(--gold)':bal.net<0?'var(--loss)':'var(--text-faint)'}">${bal.net===0?'Settled':(bal.net>0? fmtMoney(bal.net)+' owed':'You owe '+fmtMoney(-bal.net))}</div>`;
+    } else {
+      const t = myTotals();
+      balHtml = `<div class="mono" style="font-weight:600; color:${t.profitMine>=0?'var(--profit)':'var(--loss)'}">${fmtMoney(t.profitMine)} profit</div>`;
+    }
+    return `<div class="list-item" onclick="openUser('${u.id}')">
+      <div class="row">
+        <div class="row" style="gap:11px;">
+          <div class="avatar">${initials(u.name)}</div>
+          <div>
+            <div class="title">${esc(u.name)}${u.isMe?' (You)':''}</div>
+            <div class="meta">${apps.length} application${apps.length!==1?'s':''}${!u.isMe? ' · '+(u.defaultCommission!=null?u.defaultCommission:25)+'% default commission':''}</div>
+          </div>
+        </div>
+        <div class="right">${balHtml}</div>
+      </div>
+    </div>`;
+  }).join('') : emptyBlock('No matches', 'Try a different search.');
+}
+function renderUsersList(){
+  const search = state.users.length>4 ? `<input type="text" placeholder="Search users…" value="${esc(userSearchQuery)}" style="margin-bottom:12px;" oninput="userSearchQuery=this.value; renderUserListOnly();">` : '';
+  return `${search}<div id="userListBody">${buildUserListHtml()}</div>`;
+}
+function renderUserListOnly(){
+  const body = document.getElementById('userListBody');
+  if(!body) return render();
+  body.innerHTML = buildUserListHtml();
+}
+
+/* ============================= USER DETAIL ============================= */
+function openUser(id){ activeTab='users'; userDetailId=id; render(); window.scrollTo(0,0); }
+function renderUserDetail(){
+  const u = state.users.find(x=>x.id===userDetailId);
+  if(!u){ userDetailId=null; return renderUsersList(); }
+  const apps = state.applications.filter(a=>a.userId===u.id);
+  const bal = !u.isMe ? userBalance(u.id) : null;
+  const txns = state.transactions.filter(t=>t.fromUserId===u.id || t.toUserId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+
+  return `
+    <button class="btn-ghost btn btn-sm" style="width:auto; margin-bottom:14px;" onclick="userDetailId=null; render();">← All Users</button>
+    <div class="card">
+      <div class="row" style="align-items:flex-start;">
+        <div class="row" style="gap:12px;">
+          <div class="avatar" style="width:46px; height:46px; font-size:16px;">${initials(u.name)}</div>
+          <div>
+            <div class="page-title" style="font-size:18px; margin-bottom:2px;">${esc(u.name)}${u.isMe?' (You)':''}</div>
+            ${!u.isMe? `<div class="meta">Default commission: ${u.defaultCommission!=null?u.defaultCommission:25}%</div>`:'<div class="meta">Account owner</div>'}
+          </div>
+        </div>
+        <button class="btn-ghost btn btn-sm" onclick="openUserModal('${u.id}')">Edit</button>
+      </div>
+      ${(u.pan||u.tpin) ? `
+        <div class="divider"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          ${u.pan ? `<div>
+            <div class="k" style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">PAN</div>
+            <div class="mono" style="font-size:13px; letter-spacing:1px;">${esc(u.pan.slice(0,5))}●●●●${esc(u.pan.slice(-1))}</div>
+          </div>` : '<div></div>'}
+          ${u.tpin ? `<div>
+            <div class="k" style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">TPIN</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="mono" id="tpinDisplay_${u.id}" style="font-size:13px; letter-spacing:1px;">••••••</span>
+              <span style="font-size:11px; color:var(--gold); cursor:pointer; user-select:none;" onclick="toggleTpin('${u.id}','${esc(u.tpin)}')">Show</span>
+            </div>
+          </div>` : ''}
+        </div>
+      ` : ''}
+    </div>
+
+    ${!u.isMe ? `
+      <div class="stat-grid">
+        <div class="stat"><div class="label">Opening Balance</div><div class="value">${fmtMoney(bal.opening)}</div></div>
+        <div class="stat"><div class="label">Owed via IPOs</div><div class="value gold">${fmtMoney(bal.owed)}</div></div>
+        <div class="stat"><div class="label">Net Balance</div><div class="value ${bal.net>=0?'gold':'loss'}">${bal.net>=0?fmtMoney(bal.net):'-'+fmtMoney(-bal.net)}</div></div>
+        <div class="stat"><div class="label">Transfers (Given − Received)</div><div class="value">${fmtMoney(bal.given-bal.received)}</div></div>
+      </div>
+      <div class="helptext" style="margin:-6px 2px 14px;">Positive net balance = ${esc(u.name)} owes you. Negative = you owe them. Includes opening balance.</div>
+    ` : `
+      <div class="stat-grid">
+        <div class="stat"><div class="label">Opening Balance</div><div class="value">${fmtMoney(u.openingBalance||0)}</div></div>
+        <div class="stat"><div class="label">My Account</div><div class="value ${myAccountBalance()>=0?'gold':'loss'}">${fmtMoney(myAccountBalance())}</div></div>
+      </div>
+    `}
+
+    <div class="section-label">Applications</div>
+    ${apps.length? apps.map(a=>{
+      const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return '';
+      const c = computeApp(a, ipo, u);
+      return `<div class="list-item" onclick="openIpo('${ipo.id}')">
+        <div class="row">
+          <div>
+            <div class="title">${esc(ipo.name)}</div>
+            <div class="meta">${a.lots} lot(s) · ${fmtMoney(totalCost(a,ipo))}${c.status==='settled'? ' · P/L '+fmtMoney(c.profit):''}</div>
+          </div>
+          <div class="right">${statusBadge(ipo)}</div>
+        </div>
+      </div>`;
+    }).join('') : emptyBlock('No applications', 'Applications for this user will appear here.')}
+
+    <div class="section-label">Money Transfers</div>
+    <div class="card card-tight">
+      ${txns.length? txns.map(t=>{
+        const fromU = state.users.find(x=>x.id===t.fromUserId);
+        const toU = state.users.find(x=>x.id===t.toUserId);
+        const isIn = t.toUserId===u.id;
+        let label;
+        if(t.fromUserId===u.id) label = `To ${toU?esc(toU.name):'?'}${toU&&toU.isMe?' (You)':''}`;
+        else label = `From ${fromU?esc(fromU.name):'?'}${fromU&&fromU.isMe?' (You)':''}`;
+        return `
+          <div class="txn-item">
+            <div class="txn-dot ${isIn?'in':'out'}">${isIn?'↓':'↑'}</div>
+            <div style="flex:1; cursor:pointer;" onclick="openTxnModal(null,'${t.id}')">
+              <div style="font-size:13px; font-weight:500;">${label}</div>
+              <div class="meta">${fmtDate(t.date)}${t.note? ' · '+esc(t.note):''}</div>
+            </div>
+            <div class="mono" style="font-weight:600;">${fmtMoney(t.amount)}</div>
+            <span style="color:var(--text-faint); font-size:15px; cursor:pointer; padding:4px 2px;" onclick="deleteTxn('${t.id}')">✕</span>
+          </div>`;
+      }).join('') : `<div class="meta" style="padding:6px 0;">No transfers logged yet.</div>`}
+    </div>
+    <div class="field-row" style="margin-top:10px;">
+      <button class="btn btn-secondary" onclick="openTxnModal('${u.id}')">+ Log Transfer</button>
+      ${!u.isMe? `<button class="btn btn-primary" ${bal.net===0?'disabled style="opacity:0.4;"':''} onclick="settleUp('${u.id}')">Settle Up</button>` : '<div></div>'}
+    </div>
+  `;
+}
+function toggleTpin(userId, tpin){
+  const el = document.getElementById('tpinDisplay_'+userId);
+  const btn = el ? el.nextElementSibling : null;
+  if(!el) return;
+  if(el.textContent==='••••••'){ el.textContent=tpin; if(btn) btn.textContent='Hide'; }
+  else { el.textContent='••••••'; if(btn) btn.textContent='Show'; }
+}
+function settleUp(userId){
+  const bal = userBalance(userId);
+  const me = state.users.find(u=>u.isMe);
+  if(bal.net===0){ showToast('Already settled'); return; }
+  if(bal.net>0) openTxnModal(null, null, {fromUserId:userId, toUserId:me.id, amount:Math.abs(bal.net), note:'Settle up'});
+  else openTxnModal(null, null, {fromUserId:me.id, toUserId:userId, amount:Math.abs(bal.net), note:'Settle up'});
+}
+
+/* ============================= REPORTS ============================= */
+let reportIpoId = null, reportUserId = null;
+function renderReports(){
+  if(!reportIpoId && state.ipos.length) reportIpoId = state.ipos[0].id;
+  if(!reportUserId && state.users.length) reportUserId = state.users.find(u=>!u.isMe)?.id || state.users[0].id;
+
+  const ipoOptions = state.ipos.map(i=>`<option value="${i.id}" ${i.id===reportIpoId?'selected':''}>${esc(i.name)}</option>`).join('');
+  const userOptions = state.users.map(u=>`<option value="${u.id}" ${u.id===reportUserId?'selected':''}>${esc(u.name)}${u.isMe?' (You)':''}</option>`).join('');
+
+  let ipoReportHtml = emptyBlock('No IPO selected','Add an IPO to see its report.');
+  if(reportIpoId){
+    const ipo = state.ipos.find(i=>i.id===reportIpoId);
+    if(ipo){
+      const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+      ipoReportHtml = apps.length ? `
+        <div class="card card-tight">
+          <table class="tbl">
+            <tr><th>Applicant</th><th>Lots</th><th>Status</th><th>P/L</th><th>Owed</th></tr>
+            ${apps.map(a=>{
+              const u=state.users.find(x=>x.id===a.userId); if(!u) return '';
+              const c=computeApp(a,ipo,u);
+              return `<tr>
+                <td>${esc(u.name)}${u.isMe?' •':''}</td>
+                <td>${a.lots}</td>
+                <td>${c.status==='refunded'?'Not allotted':c.status==='holding'?'Holding':c.status==='settled'?'Sold':'Pending'}</td>
+                <td class="mono ${c.profit>0?'profit':c.profit<0?'loss':''}">${c.profit!=null?fmtMoney(c.profit):'—'}</td>
+                <td class="mono">${u.isMe?'—':fmtMoney(c.owedToMe)}</td>
+              </tr>`;
+            }).join('')}
+          </table>
+        </div>` : emptyBlock('No applicants', 'This IPO has no applicants yet.');
+    }
+  }
+
+  let userReportHtml = emptyBlock('No user selected','Add a user to see their report.');
+  if(reportUserId){
+    const u = state.users.find(x=>x.id===reportUserId);
+    if(u){
+      const apps = state.applications.filter(a=>a.userId===u.id);
+      userReportHtml = apps.length ? `
+        <div class="card card-tight">
+          <table class="tbl">
+            <tr><th>IPO</th><th>Lots</th><th>Status</th><th>P/L</th>${u.isMe?'':'<th>Owed</th>'}</tr>
+            ${apps.map(a=>{
+              const ipo=state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return '';
+              const c=computeApp(a,ipo,u);
+              return `<tr>
+                <td>${esc(ipo.name)}</td>
+                <td>${a.lots}</td>
+                <td>${c.status==='refunded'?'Not allotted':c.status==='holding'?'Holding':c.status==='settled'?'Sold':'Pending'}</td>
+                <td class="mono ${c.profit>0?'profit':c.profit<0?'loss':''}">${c.profit!=null?fmtMoney(c.profit):'—'}</td>
+                ${u.isMe?'':`<td class="mono">${fmtMoney(c.owedToMe)}</td>`}
+              </tr>`;
+            }).join('')}
+          </table>
+        </div>` : emptyBlock('No applications', 'This user has no applications yet.');
+    }
+  }
+
+  return `
+    <div class="section-label" style="margin-top:0;">All IPOs Summary</div>
+    <div class="helptext" style="margin:0 0 10px;">One PDF covering every IPO: applied, not applied, allotted, profit per allotment, and total profit.</div>
+    <button class="btn btn-primary" onclick="exportAllIposSummaryPDF()">Download All IPOs Summary (PDF)</button>
+
+    <div class="section-label">Report by IPO</div>
+    <select onchange="reportIpoId=this.value; render();">${ipoOptions || '<option>No IPOs yet</option>'}</select>
+    <div style="margin-top:12px;">${ipoReportHtml}</div>
+    ${reportIpoId && state.applications.some(a=>a.ipoId===reportIpoId) ? `
+      <div class="field-row" style="margin-top:10px;">
+        <button class="btn btn-secondary btn-sm" onclick="exportIpoReportCSV('${reportIpoId}')">Export CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="exportIpoReportPDF('${reportIpoId}')">Download PDF</button>
+      </div>` : ''}
+
+    <div class="section-label">IPO Details Report</div>
+    <div class="helptext" style="margin:0 0 10px;">IPO name, price, last date to apply, and expected profit as per GMP you entered.</div>
+    ${reportIpoId ? `<div class="field-row">
+      <button class="btn btn-secondary btn-sm" onclick="exportIpoDetailsPDF('${reportIpoId}')">Download IPO Details (PDF)</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportIpoDetailsImage('${reportIpoId}')">Download as Image</button>
+    </div>` : ''}
+
+    <div class="section-label">Report by User</div>
+    <select onchange="reportUserId=this.value; render();">${userOptions || '<option>No users yet</option>'}</select>
+    <div style="margin-top:12px;">${userReportHtml}</div>
+    ${reportUserId && state.applications.some(a=>a.userId===reportUserId) ? `
+      <div class="field-row" style="margin-top:10px;">
+        <button class="btn btn-secondary btn-sm" onclick="exportUserReportCSV('${reportUserId}')">Export CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="exportUserReportPDF('${reportUserId}')">Download PDF</button>
+      </div>` : ''}
+  `;
+}
+function csvCell(v){
+  const s = (v===null||v===undefined)? '' : String(v);
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function downloadCSV(rows, filename){
+  const csv = rows.map(r=>r.map(csvCell).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  showToast('CSV downloaded');
+}
+function exportIpoReportCSV(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo) return;
+  const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+  const rows = [['Applicant','Lots','Status','Sell Price','Profit/Loss','Owed to Me']];
+  apps.forEach(a=>{
+    const u = state.users.find(x=>x.id===a.userId); if(!u) return;
+    const c = computeApp(a, ipo, u);
+    rows.push([u.name, a.lots, c.status, a.sellPrice||'', c.profit!=null?Math.round(c.profit):'', u.isMe?'':Math.round(c.owedToMe)]);
+  });
+  downloadCSV(rows, `${ipo.name.replace(/[^a-z0-9]+/gi,'-')}-report.csv`);
+}
+function exportUserReportCSV(userId){
+  const u = state.users.find(x=>x.id===userId); if(!u) return;
+  const apps = state.applications.filter(a=>a.userId===userId);
+  const rows = [['IPO','Lots','Status','Sell Price','Profit/Loss','Owed to Me']];
+  apps.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const c = computeApp(a, ipo, u);
+    rows.push([ipo.name, a.lots, c.status, a.sellPrice||'', c.profit!=null?Math.round(c.profit):'', u.isMe?'':Math.round(c.owedToMe)]);
+  });
+  downloadCSV(rows, `${u.name.replace(/[^a-z0-9]+/gi,'-')}-statement.csv`);
+}
+
+/* ============================= PDF EXPORTS ============================= */
+const PDF_GOLD = [212,166,86];
+const PDF_DARK = [20,20,22];
+const PDF_TEXT = [40,40,42];
+const PDF_DIM = [120,120,126];
+const PDF_PROFIT = [30,140,80];
+const PDF_LOSS = [200,60,55];
+
+function pdfDoc(){
+  const { jsPDF } = window.jspdf;
+  return new jsPDF({ unit:'pt', format:'a4' });
+}
+
+function pdfHeader(doc, title, subtitle){
+  const pageWidth = doc.internal.pageSize.getWidth();
+  doc.setFillColor(...PDF_DARK);
+  doc.rect(0, 0, pageWidth, 64, 'F');
+  doc.setTextColor(...PDF_GOLD);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('Lot & Ledger', 36, 28);
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(title, 36, 46);
+  doc.setTextColor(200,200,205);
+  doc.setFontSize(8);
+  doc.text(subtitle || `Generated ${fmtDate(todayISO())}`, 36, 58);
+  doc.setTextColor(...PDF_TEXT);
+  return 84;
+}
+
+function pdfFooter(doc){
+  const pageCount = doc.internal.getNumberOfPages();
+  for(let i=1;i<=pageCount;i++){
+    doc.setPage(i);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    doc.setFontSize(8);
+    doc.setTextColor(...PDF_DIM);
+    doc.text(`Lot & Ledger — Page ${i} of ${pageCount}`, 36, pageHeight-20);
+    doc.text(fmtDate(todayISO()), pageWidth-36, pageHeight-20, {align:'right'});
+  }
+}
+
+function statusLabelFor(c){
+  return c.status==='refunded' ? 'Not Allotted'
+    : c.status==='holding' ? 'Allotted (Holding)'
+    : c.status==='settled' ? 'Allotted (Sold)'
+    : 'Awaiting Result';
+}
+
+function downloadPDF(doc, filename){
+  try{
+    doc.save(filename);
+    showToast('PDF downloaded');
+  }catch(e){ showToast('PDF export failed'); }
+}
+
+/* --- Single IPO Report PDF: applied / not applied / allotted / profit per allotment / total profit --- */
+function exportIpoReportPDF(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo) return;
+  const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, `IPO Report — ${ipo.name}`, `Price ${fmtMoney(ipo.pricePerShare)} · Lot ${ipo.lotSize||0} · Last date to apply ${fmtDate(lastApplyDate(ipo))}`);
+
+  const applied = apps.length;
+  const notApplied = state.users.length - applied;
+  const allotted = apps.filter(a=>a.allotted===true).length;
+  const notAllotted = apps.filter(a=>a.allotted===false).length;
+  const pending = apps.filter(a=>a.allotted==null).length;
+  let totalProfit = 0;
+  apps.forEach(a=>{
+    const u = state.users.find(x=>x.id===a.userId); if(!u) return;
+    const c = computeApp(a, ipo, u);
+    if(c.status==='settled') totalProfit += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+  });
+
+  doc.setFontSize(10); doc.setTextColor(...PDF_TEXT); doc.setFont('helvetica','bold');
+  doc.text('Summary', 36, y); y += 6;
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [['Applied','Not Applied','Allotted','Not Allotted','Awaiting Result','Total Profit (Mine)']],
+    body: [[applied, Math.max(0,notApplied), allotted, notAllotted, pending, fmtMoney(totalProfit)]],
+    theme: 'grid',
+    headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+    bodyStyles:{ fontSize:9 },
+    didParseCell: (data)=>{
+      if(data.section==='body' && data.column.index===5){
+        data.cell.styles.textColor = totalProfit>=0 ? PDF_PROFIT : PDF_LOSS;
+        data.cell.styles.fontStyle = 'bold';
+      }
+    }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('Applications', 36, y); y += 6;
+
+  const body = apps.map(a=>{
+    const u = state.users.find(x=>x.id===a.userId);
+    if(!u) return null;
+    const c = computeApp(a, ipo, u);
+    const srcLabel = {me:'My Fund', shared:'Shared', own:"User's Own"}[c.fundingSource] || '—';
+    const profitDisplay = c.profit!=null ? fmtMoney(u.isMe? c.profit : c.myProfitShare) : '—';
+    return [u.name + (u.isMe?' (You)':''), a.lots, srcLabel, statusLabelFor(c),
+      c.status==='settled'? fmtMoney(a.sellPrice) : '—', profitDisplay,
+      u.isMe? '—' : (c.status==='refunded'||c.status==='settled' ? fmtMoney(c.owedToMe) : '—')];
+  }).filter(Boolean);
+
+  if(body.length){
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: [['Applicant','Lots','Funding','Status','Sell Price','Profit (Mine)','Owed to Me']],
+      body,
+      theme: 'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+      bodyStyles:{ fontSize:8.5 },
+      alternateRowStyles:{ fillColor:[247,244,238] }
+    });
+  } else {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    doc.text('No applicants for this IPO yet.', 36, y+14);
+  }
+
+  pdfFooter(doc);
+  downloadPDF(doc, `${ipo.name.replace(/[^a-z0-9]+/gi,'-')}-report.pdf`);
+}
+
+/* --- Single User Report PDF --- */
+function exportUserReportPDF(userId){
+  const u = state.users.find(x=>x.id===userId); if(!u) return;
+  const apps = state.applications.filter(a=>a.userId===userId);
+  const bal = !u.isMe ? userBalance(u.id) : null;
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, `User Report — ${u.name}${u.isMe?' (You)':''}`, u.isMe? 'Account owner' : `Default commission ${u.defaultCommission!=null?u.defaultCommission:25}%`);
+
+  let totalProfit = 0;
+  apps.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const c = computeApp(a, ipo, u);
+    if(c.status==='settled') totalProfit += u.isMe ? (c.profit||0) : (c.friendShare||0);
+  });
+
+  doc.setFontSize(10); doc.setTextColor(...PDF_TEXT); doc.setFont('helvetica','bold');
+  doc.text('Summary', 36, y); y += 6;
+  const summaryHead = u.isMe
+    ? ['Opening Balance','Applications','Total Profit']
+    : ['Opening Balance','Applications','Their Profit','Net Balance'];
+  const summaryBody = u.isMe
+    ? [[fmtMoney(u.openingBalance||0), apps.length, fmtMoney(totalProfit)]]
+    : [[fmtMoney(bal.opening), apps.length, fmtMoney(totalProfit), (bal.net>=0?fmtMoney(bal.net)+' owed to you':'You owe '+fmtMoney(-bal.net))]];
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [summaryHead], body: summaryBody,
+    theme:'grid', headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:9 }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('IPO Applications', 36, y); y += 6;
+
+  const body = apps.map(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return null;
+    const c = computeApp(a, ipo, u);
+    const srcLabel = {me:'My Fund', shared:'Shared', own:"User's Own"}[c.fundingSource] || '—';
+    const profitDisplay = c.profit!=null ? fmtMoney(u.isMe? c.profit : c.friendShare) : '—';
+    return [ipo.name, a.lots, srcLabel, statusLabelFor(c), profitDisplay, u.isMe?'—':(c.status==='refunded'||c.status==='settled'?fmtMoney(c.owedToMe):'—')];
+  }).filter(Boolean);
+
+  if(body.length){
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: [['IPO','Lots','Funding','Status','Profit','Owed to Me']],
+      body, theme:'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+      alternateRowStyles:{ fillColor:[247,244,238] }
+    });
+    y = doc.lastAutoTable.finalY + 24;
+  } else {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    doc.text('No applications yet.', 36, y+14);
+    y += 30;
+  }
+
+  if(!u.isMe){
+    const txns = state.transactions.filter(t=>t.fromUserId===u.id || t.toUserId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+    if(txns.length){
+      if(y > doc.internal.pageSize.getHeight()-120){ doc.addPage(); y = 40; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+      doc.text('Money Transfers', 36, y); y += 6;
+      const txnBody = txns.map(t=>{
+        const fromU = state.users.find(x=>x.id===t.fromUserId);
+        const toU = state.users.find(x=>x.id===t.toUserId);
+        return [fmtDate(t.date), fromU?fromU.name:'?', toU?toU.name:'?', fmtMoney(t.amount), t.note||''];
+      });
+      doc.autoTable({
+        startY: y+6, margin:{left:36,right:36},
+        head: [['Date','From','To','Amount','Note']],
+        body: txnBody, theme:'striped',
+        headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+        alternateRowStyles:{ fillColor:[247,244,238] }
+      });
+    }
+  }
+
+  pdfFooter(doc);
+  downloadPDF(doc, `${u.name.replace(/[^a-z0-9]+/gi,'-')}-statement.pdf`);
+}
+
+/* --- IPO Details PDF: name, price, last date to apply, GMP-based expected profit --- */
+function exportIpoDetailsPDF(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo) return;
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, `IPO Details — ${ipo.name}`, 'Projection based on GMP entered manually');
+
+  const expPerShare = expectedProfitPerShare(ipo);
+  const expPerLot = expectedProfitPerLot(ipo);
+  const expTotal = expectedProfitForIpo(ipo);
+
+  doc.setFontSize(10); doc.setTextColor(...PDF_TEXT); doc.setFont('helvetica','bold');
+  doc.text('IPO Overview', 36, y); y += 6;
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [['IPO Name','Price / Share','Lot Size','Cost / Lot','Last Date to Apply','Allotment Date','Listing Date']],
+    body: [[ipo.name, fmtMoney(ipo.pricePerShare), ipo.lotSize||0, fmtMoney((ipo.lotSize||0)*(ipo.pricePerShare||0)), fmtDate(lastApplyDate(ipo)), fmtDate(ipo.allotmentDate), fmtDate(ipo.listingDate)]],
+    theme:'grid', headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:7.5 }, bodyStyles:{ fontSize:8.5 }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+  doc.text('Expected Profit (as per GMP)', 36, y); y += 6;
+  if(expPerShare==null){
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    doc.text('No GMP entered for this IPO yet — add it from the IPO detail screen to see a projection.', 36, y+14);
+    y += 30;
+  } else {
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: [['GMP / Share','Expected Profit / Lot','Total Expected Profit (all applicants)']],
+      body: [[ (expPerShare>=0?'+':'')+fmtMoney(expPerShare), fmtMoney(expPerLot), fmtMoney(expTotal) ]],
+      theme:'grid', headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:9 },
+      didParseCell: (data)=>{
+        if(data.section==='body'){
+          data.cell.styles.textColor = expPerShare>=0 ? PDF_PROFIT : PDF_LOSS;
+          data.cell.styles.fontStyle = 'bold';
+        }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 24;
+
+    const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+    if(apps.length){
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+      doc.text('Expected Profit by Applicant', 36, y); y += 6;
+      const body = apps.map(a=>{
+        const u = state.users.find(x=>x.id===a.userId); if(!u) return null;
+        const exp = expectedProfitForApp(a, ipo);
+        return [u.name+(u.isMe?' (You)':''), a.lots, exp!=null?fmtMoney(exp):'—'];
+      }).filter(Boolean);
+      doc.autoTable({
+        startY: y+6, margin:{left:36,right:36},
+        head: [['Applicant','Lots','Expected Profit']],
+        body, theme:'striped',
+        headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+        alternateRowStyles:{ fillColor:[247,244,238] }
+      });
+    }
+  }
+
+  if(ipo.notes){
+    y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 24 : y;
+    if(y > doc.internal.pageSize.getHeight()-80){ doc.addPage(); y = 40; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+    doc.text('Notes', 36, y); y += 16;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    const lines = doc.splitTextToSize(ipo.notes, doc.internal.pageSize.getWidth()-72);
+    doc.text(lines, 36, y);
+  }
+
+  pdfFooter(doc);
+  downloadPDF(doc, `${ipo.name.replace(/[^a-z0-9]+/gi,'-')}-details.pdf`);
+}
+
+/* --- All IPOs Summary PDF: applied / not applied / allotted / profit per allotment / total profit, across every IPO --- */
+function exportAllIposSummaryPDF(){
+  if(!state.ipos.length){ showToast('No IPOs to report'); return; }
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, 'All IPOs Summary Report', `${state.ipos.length} IPO${state.ipos.length!==1?'s':''} tracked`);
+
+  let grandProfit = 0;
+  const rows = state.ipos.map(ipo=>{
+    const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+    const applied = apps.length;
+    const notApplied = Math.max(0, state.users.length - applied);
+    const allotted = apps.filter(a=>a.allotted===true).length;
+    const notAllotted = apps.filter(a=>a.allotted===false).length;
+    let ipoProfit = 0;
+    apps.forEach(a=>{
+      const u = state.users.find(x=>x.id===a.userId); if(!u) return;
+      const c = computeApp(a, ipo, u);
+      if(c.status==='settled') ipoProfit += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+    });
+    grandProfit += ipoProfit;
+    return [ipo.name, applied, notApplied, allotted, notAllotted, fmtMoney(ipoProfit)];
+  });
+
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [['IPO Name','Applied','Not Applied','Allotted','Not Allotted','Total Profit (Mine)']],
+    body: rows,
+    theme:'striped',
+    headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+    bodyStyles:{ fontSize:8.5 },
+    alternateRowStyles:{ fillColor:[247,244,238] },
+    foot: [['Grand Total','','','','', fmtMoney(grandProfit)]],
+    footStyles:{ fillColor:[235,225,205], textColor:PDF_DARK, fontStyle:'bold', fontSize:9 }
+  });
+
+  pdfFooter(doc);
+  downloadPDF(doc, `all-ipos-summary-${todayISO()}.pdf`);
+}
+
+/* ============================= IMAGE EXPORT ============================= */
+function exportIpoDetailsImage(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo){ showToast('IPO not found'); return; }
+
+  const dpr = window.devicePixelRatio || 1;
+  const W = 720, PAD = 36;
+  const GOLD = '#d4a656', PROFIT = '#5fd188', LOSS = '#f0685f', DIM = '#8f8f95', FAINT = '#5c5c62';
+  const BG = '#0a0a0b', BG2 = '#141416', BG3 = '#1c1c1f', BORDER = '#28282c', TEXT = '#ededec';
+
+  const expPerShare = expectedProfitPerShare(ipo);
+  const expPerLot = expectedProfitPerLot(ipo);
+  const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+
+  // Compute rows
+  const rows = [
+    ['Price / Share', fmtMoney(ipo.pricePerShare)],
+    ['Lot Size', String(ipo.lotSize||0)],
+    ['Cost / Lot', fmtMoney((ipo.lotSize||0)*(ipo.pricePerShare||0))],
+    ['GMP / Share', ipo.gmp!=null ? (ipo.gmp>=0?'+':'')+fmtMoney(ipo.gmp) : '—'],
+    ['Expected Profit / Lot', expPerLot!=null ? fmtMoney(expPerLot) : '—'],
+    ['Last Date to Apply', fmtDate(lastApplyDate(ipo))],
+    ['Allotment Date', fmtDate(ipo.allotmentDate)],
+    ['Listing Date', fmtDate(ipo.listingDate)],
+  ];
+  if(ipo.listingPrice!=null) rows.push(['Listing Price', fmtMoney(ipo.listingPrice)]);
+
+  const appRows = apps.map(a=>{
+    const u = state.users.find(x=>x.id===a.userId); if(!u) return null;
+    const exp = expectedProfitForApp(a, ipo);
+    return [u.name+(u.isMe?' (You)':''), String(a.lots)+' lot'+(a.lots!==1?'s':''), exp!=null?fmtMoney(exp):'—'];
+  }).filter(Boolean);
+
+  const ROW_H = 38, HEADER_H = 70, TITLE_BLOCK = 88, SECTION_GAP = 20;
+  let estimatedH = HEADER_H + TITLE_BLOCK + rows.length * ROW_H + SECTION_GAP;
+  if(appRows.length) estimatedH += 36 + appRows.length * ROW_H + SECTION_GAP;
+  if(ipo.notes) estimatedH += 48 + 26;
+  estimatedH += 50; // footer + bottom padding
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W * dpr; canvas.height = estimatedH * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // BG
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, estimatedH);
+
+  // Header bar
+  ctx.fillStyle = BG2;
+  roundRect(ctx, 0, 0, W, HEADER_H, 0);
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 15px Inter, sans-serif';
+  ctx.fillText('Lot & Ledger', PAD, 30);
+  ctx.fillStyle = TEXT;
+  ctx.font = '12px Inter, sans-serif';
+  ctx.fillText('IPO Details', PAD, 50);
+  ctx.fillStyle = DIM;
+  ctx.font = '10px Inter, sans-serif';
+  ctx.fillText(`Generated ${fmtDate(todayISO())}`, PAD, 64);
+
+  let y = HEADER_H + 24;
+
+  // IPO name + status
+  ctx.fillStyle = TEXT;
+  ctx.font = 'bold 22px Inter, sans-serif';
+  ctx.fillText(ipo.name, PAD, y); y += 28;
+  const st = ipoStatus(ipo);
+  const stLabel = STATUS_LABEL[st] || st;
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 11px Inter, sans-serif';
+  ctx.fillText('● ' + stLabel.toUpperCase(), PAD, y); y += 28;
+
+  // Divider
+  divLine(ctx, PAD, y, W-PAD, BORDER); y += 18;
+
+  // Detail rows
+  rows.forEach(([k, v], i)=>{
+    const rowY = y + i * ROW_H;
+    if(i%2===1){ ctx.fillStyle = BG3; roundRect(ctx, PAD-8, rowY-18, W-PAD*2+16, ROW_H, 6); }
+    ctx.fillStyle = FAINT;
+    ctx.font = '10px Inter, sans-serif';
+    ctx.fillText(k.toUpperCase(), PAD, rowY);
+    // color for GMP / expected profit
+    let valColor = TEXT;
+    if(k.includes('GMP') || k.includes('Expected')){ valColor = expPerShare!=null ? (expPerShare>=0? PROFIT : LOSS) : DIM; }
+    ctx.fillStyle = valColor;
+    ctx.font = 'bold 14px "Courier New", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(v, W-PAD, rowY+14);
+    ctx.textAlign = 'left';
+  });
+  y += rows.length * ROW_H + SECTION_GAP;
+
+  // Applicants section
+  if(appRows.length){
+    divLine(ctx, PAD, y, W-PAD, BORDER); y += 20;
+    ctx.fillStyle = FAINT;
+    ctx.font = 'bold 10px Inter, sans-serif';
+    ctx.fillText('EXPECTED PROFIT BY APPLICANT', PAD, y); y += 20;
+    appRows.forEach(([name, lots, exp], i)=>{
+      const rowY = y + i * ROW_H;
+      if(i%2===0){ ctx.fillStyle = BG3; roundRect(ctx, PAD-8, rowY-16, W-PAD*2+16, ROW_H, 6); }
+      ctx.fillStyle = TEXT;
+      ctx.font = '13px Inter, sans-serif';
+      ctx.fillText(name, PAD, rowY);
+      ctx.fillStyle = DIM;
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText(lots, PAD, rowY+14);
+      ctx.fillStyle = expPerShare!=null ? (expPerShare>=0? PROFIT : LOSS) : DIM;
+      ctx.font = 'bold 14px "Courier New", monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(exp, W-PAD, rowY+8);
+      ctx.textAlign = 'left';
+    });
+    y += appRows.length * ROW_H + SECTION_GAP;
+  }
+
+  // Notes
+  if(ipo.notes){
+    divLine(ctx, PAD, y, W-PAD, BORDER); y += 20;
+    ctx.fillStyle = FAINT;
+    ctx.font = 'bold 10px Inter, sans-serif';
+    ctx.fillText('NOTES', PAD, y); y += 18;
+    ctx.fillStyle = DIM;
+    ctx.font = '12px Inter, sans-serif';
+    const noteLines = wrapText(ctx, ipo.notes, W-PAD*2);
+    noteLines.forEach(l=>{ ctx.fillText(l, PAD, y); y += 18; });
+    y += 8;
+  }
+
+  // Footer
+  y += 12;
+  divLine(ctx, PAD, y, W-PAD, BORDER); y += 16;
+  ctx.fillStyle = FAINT;
+  ctx.font = '10px Inter, sans-serif';
+  ctx.fillText('Lot & Ledger — IPO Manager', PAD, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(fmtDate(todayISO()), W-PAD, y);
+  ctx.textAlign = 'left';
+
+  // Trim canvas to actual height
+  const finalH = y + 24;
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width = W * dpr; outCanvas.height = finalH * dpr;
+  const octx = outCanvas.getContext('2d');
+  octx.drawImage(canvas, 0, 0);
+
+  outCanvas.toBlob(blob=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${ipo.name.replace(/[^a-z0-9]+/gi,'-')}-details.png`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    showToast('Image downloaded');
+  }, 'image/png');
+}
+
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath(); ctx.fill();
+}
+function divLine(ctx, x1, y, x2, color){
+  ctx.strokeStyle = color; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+}
+function wrapText(ctx, text, maxW){
+  const words = text.split(' '); const lines = []; let line = '';
+  words.forEach(w=>{ const test = line ? line+' '+w : w; if(ctx.measureText(test).width > maxW){ lines.push(line); line = w; } else line = test; });
+  if(line) lines.push(line);
+  return lines;
+}
+
+/* ============================= MODALS ============================= */
+function openModal(innerHtml){
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-backdrop';
+  wrap.id = 'modalBackdrop';
+  wrap.innerHTML = `<div class="modal" onclick="event.stopPropagation()"><div class="modal-handle"></div>${innerHtml}</div>`;
+  wrap.addEventListener('click', closeModal);
+  document.body.appendChild(wrap);
+}
+function closeModal(){
+  const m = document.getElementById('modalBackdrop');
+  if(m) m.remove();
+}
+
+/* --- IPO modal --- */
+let tempBiddingDates = [];
+function openIpoModal(ipoId){
+  const ipo = ipoId ? state.ipos.find(i=>i.id===ipoId) : null;
+  tempBiddingDates = ipo ? (ipo.biddingDates||[]).slice() : [];
+  openModal(`
+    <div class="modal-title">${ipo?'Edit IPO':'Add IPO'}</div>
+    <label>IPO Name</label>
+    <input type="text" id="f_name" value="${ipo?esc(ipo.name):''}" placeholder="e.g. Acme Industries">
+    <div class="field-row">
+      <div><label>Price per Share</label><input type="number" class="mono" id="f_price" value="${ipo?ipo.pricePerShare:''}" placeholder="0"></div>
+      <div><label>Shares per Lot</label><input type="number" class="mono" id="f_lot" value="${ipo?ipo.lotSize:''}" placeholder="0"></div>
+    </div>
+    <label>Bidding Dates (select multiple)</label>
+    <div class="date-add-row">
+      <input type="date" id="f_biddate">
+      <button class="btn btn-secondary btn-sm" onclick="addTempDate()">Add</button>
+    </div>
+    <div class="chip-list" id="dateChips">${renderDateChips()}</div>
+    <div class="field-row">
+      <div><label>Allotment Date</label><input type="date" id="f_allot" value="${ipo?ipo.allotmentDate||'':''}"></div>
+      <div><label>Listing Date</label><input type="date" id="f_listing" value="${ipo?ipo.listingDate||'':''}"></div>
+    </div>
+    <label>Current GMP (₹ per share)</label>
+    <input type="number" class="mono" id="f_gmp" value="${ipo && ipo.gmp!=null?ipo.gmp:''}" placeholder="0">
+    <label>Notes (optional)</label>
+    <input type="text" id="f_notes" value="${ipo&&ipo.notes?esc(ipo.notes):''}" placeholder="e.g. broker used, application ref.">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveIpo('${ipoId||''}')">Save IPO</button>
+    </div>
+    ${ipo? `<button class="btn btn-danger" style="margin-top:10px;" onclick="deleteIpo('${ipoId}')">Delete IPO</button>` : ''}
+  `);
+}
+function renderDateChips(){
+  return tempBiddingDates.slice().sort().map(d=>`<div class="chip">${fmtDateShort(d)}<span class="x" onclick="removeTempDate('${d}')">✕</span></div>`).join('');
+}
+function addTempDate(){
+  const v = document.getElementById('f_biddate').value;
+  if(!v) return;
+  if(!tempBiddingDates.includes(v)) tempBiddingDates.push(v);
+  document.getElementById('dateChips').innerHTML = renderDateChips();
+}
+function removeTempDate(d){
+  tempBiddingDates = tempBiddingDates.filter(x=>x!==d);
+  document.getElementById('dateChips').innerHTML = renderDateChips();
+}
+function saveIpo(ipoId){
+  const name = document.getElementById('f_name').value.trim();
+  const price = parseFloat(document.getElementById('f_price').value)||0;
+  const lot = parseInt(document.getElementById('f_lot').value)||0;
+  const allot = document.getElementById('f_allot').value || null;
+  const listing = document.getElementById('f_listing').value || null;
+  const gmpVal = document.getElementById('f_gmp').value;
+  const gmp = gmpVal===''? null : parseFloat(gmpVal);
+  const notes = document.getElementById('f_notes').value.trim();
+  if(!name){ showToast('Please enter an IPO name'); return; }
+  if(ipoId){
+    const ipo = state.ipos.find(i=>i.id===ipoId);
+    Object.assign(ipo, {name, pricePerShare:price, lotSize:lot, biddingDates:tempBiddingDates.slice(), allotmentDate:allot, listingDate:listing, gmp, notes});
+  } else {
+    state.ipos.push({id:uid(), name, pricePerShare:price, lotSize:lot, biddingDates:tempBiddingDates.slice(), allotmentDate:allot, listingDate:listing, gmp, notes, listingPrice:null, archived:false});
+  }
+  saveState(); closeModal(); render(); showToast('IPO saved');
+}
+function deleteIpo(ipoId){
+  if(!confirm('Delete this IPO and all its applications? This cannot be undone.')) return;
+  state.ipos = state.ipos.filter(i=>i.id!==ipoId);
+  state.applications = state.applications.filter(a=>a.ipoId!==ipoId);
+  saveState(); closeModal(); ipoDetailId=null; render(); showToast('IPO deleted');
+}
+function openListingPriceModal(ipo){
+  openModal(`
+    <div class="modal-title">Listing Price — ${esc(ipo.name)}</div>
+    <label>Listing Price per Share</label>
+    <input type="number" class="mono" id="f_lp" value="${ipo.listingPrice!=null?ipo.listingPrice:''}" placeholder="0">
+    <div class="helptext">This sets the reference listing price. Each applicant's actual sell price can still be entered separately if they sold at a different price.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveListingPrice('${ipo.id}')">Save</button>
+    </div>
+  `);
+}
+function saveQuickGmp(ipoId){
+  const el = document.getElementById('gmpQuickInput');
+  if(!el) return;
+  const v = el.value.trim();
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo) return;
+  ipo.gmp = v===''? null : parseFloat(v);
+  saveState(); render(); showToast('GMP updated');
+}
+function saveListingPrice(ipoId){
+  const v = parseFloat(document.getElementById('f_lp').value);
+  const ipo = state.ipos.find(i=>i.id===ipoId);
+  ipo.listingPrice = isNaN(v)? null : v;
+  saveState(); closeModal(); render(); showToast('Listing price saved');
+}
+
+/* --- Application modal --- */
+function openAppModal(appId, ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId);
+  const app = appId ? state.applications.find(a=>a.id===appId) : null;
+  const usedUserIds = state.applications.filter(a=>a.ipoId===ipoId).map(a=>a.userId);
+  const availableUsers = state.users.filter(u=> app? true : !usedUserIds.includes(u.id));
+  if(!app && !availableUsers.length){ showToast('All users already applied to this IPO'); return; }
+  const userOptions = availableUsers.map(u=>`<option value="${u.id}" ${app&&app.userId===u.id?'selected':''}>${esc(u.name)}${u.isMe?' (You)':''}</option>`).join('');
+
+  const initSource = app ? fundingSourceOf(app, ipo) : 'me';
+  openModal(`
+    <div class="modal-title">${app?'Edit Applicant':'Add Applicant'}</div>
+    <label>User</label>
+    <select id="f_user" ${app?'disabled':''}>${userOptions}</select>
+    <label>Lots Applied</label>
+    <input type="number" class="mono" id="f_lots" value="${app?app.lots:1}" min="1">
+    <div class="helptext" id="costPreview"></div>
+
+    <label>Funding Source</label>
+    <div class="toggle-row" id="sourceToggle">
+      <button type="button" class="toggle-btn ${initSource==='me'?'active':''}" data-src="me" onclick="setFundingSourceUI('me')">100% My Fund</button>
+      <button type="button" class="toggle-btn ${initSource==='shared'?'active':''}" data-src="shared" onclick="setFundingSourceUI('shared')">Shared Fund</button>
+      <button type="button" class="toggle-btn ${initSource==='own'?'active':''}" data-src="own" onclick="setFundingSourceUI('own')">User's Own Fund</button>
+    </div>
+
+    <div id="investmentFields">
+      <div class="field-row" style="margin-top:14px;">
+        <div><label>My Investment Amount (₹)</label><input type="number" class="mono" id="f_funded" value="${app?app.fundedByMe:0}" placeholder="0"></div>
+        <div><label>User Investment Amount (₹)</label><input type="number" class="mono" id="f_userinv" value="0" placeholder="0" readonly></div>
+      </div>
+    </div>
+    <div class="helptext" id="sourceHelp"></div>
+
+    <div id="commissionField">
+      <label>Commission % (only used if 100% funded by you, on profit)</label>
+      <input type="number" class="mono" id="f_comm" value="${app && app.commissionPercent!=null? app.commissionPercent : ''}" placeholder="Use user default">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveApp('${appId||''}', '${ipoId}')">Save</button>
+    </div>
+  `);
+  let currentSource = initSource;
+  const userSel = document.getElementById('f_user');
+  const lotsInput = document.getElementById('f_lots');
+  const fundedInput = document.getElementById('f_funded');
+  const userInvInput = document.getElementById('f_userinv');
+  const commWrap = document.getElementById('commissionField');
+  const help = document.getElementById('sourceHelp');
+
+  const cost = () => (parseInt(lotsInput.value)||0) * (ipo.lotSize||0) * (ipo.pricePerShare||0);
+
+  window.setFundingSourceUI = (src)=>{
+    currentSource = src;
+    document.querySelectorAll('#sourceToggle .toggle-btn').forEach(b=>b.classList.toggle('active', b.dataset.src===src));
+    applySourceRules();
+  };
+
+  const applySourceRules = ()=>{
+    const total = cost();
+    const u = state.users.find(x=>x.id===userSel.value);
+    if(currentSource==='me'){
+      fundedInput.value = total; fundedInput.readOnly = true;
+      userInvInput.value = 0;
+      commWrap.style.display = (u && u.isMe) ? 'none' : '';
+      help.textContent = (u && u.isMe) ? '' : 'You fund 100%. User gets a commission % of profit; the rest is yours.';
+    } else if(currentSource==='own'){
+      fundedInput.value = 0; fundedInput.readOnly = true;
+      userInvInput.value = total;
+      commWrap.style.display = 'none';
+      help.textContent = 'User funds 100% themselves. No commission, no profit share to you — this application is for tracking only.';
+    } else { // shared
+      fundedInput.readOnly = false;
+      if(fundedInput.value==='' || parseFloat(fundedInput.value)>=total) fundedInput.value = Math.round(total/2);
+      userInvInput.value = clamp0(total - (parseFloat(fundedInput.value)||0));
+      commWrap.style.display = 'none';
+      help.textContent = 'Both contribute. Profit is split automatically by investment ratio — no commission.';
+    }
+  };
+
+  const updatePreview = ()=>{
+    const total = cost();
+    document.getElementById('costPreview').textContent = `Total applied amount: ${fmtMoney(total)} (${parseInt(lotsInput.value)||0} × ${ipo.lotSize||0} × ${fmtMoney(ipo.pricePerShare)})`;
+    if(currentSource==='shared'){
+      userInvInput.value = clamp0(total - (parseFloat(fundedInput.value)||0));
+    } else {
+      applySourceRules();
+    }
+  };
+  lotsInput.addEventListener('input', updatePreview);
+  fundedInput.addEventListener('input', ()=>{
+    if(currentSource==='shared'){
+      const total = cost();
+      userInvInput.value = clamp0(total - (parseFloat(fundedInput.value)||0));
+    }
+  });
+  if(!app){
+    userSel.addEventListener('change', applySourceRules);
+  }
+  updatePreview();
+  applySourceRules();
+}
+function saveApp(appId, ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId);
+  const userId = document.getElementById('f_user').value;
+  const lots = parseInt(document.getElementById('f_lots').value)||0;
+  let funded = parseFloat(document.getElementById('f_funded').value)||0;
+  const commVal = document.getElementById('f_comm').value;
+  const commission = commVal===''? null : parseFloat(commVal);
+  const fundingSource = (typeof currentSource!=='undefined' && currentSource) ? currentSource : 'me';
+  if(!userId){ showToast('Select a user'); return; }
+  if(lots<=0){ showToast('Enter number of lots'); return; }
+  if(!ipo.lotSize || !ipo.pricePerShare){ showToast('Set the IPO price and lot size first'); return; }
+  if(fundingSource==='own') funded = 0;
+  if(appId){
+    const a = state.applications.find(x=>x.id===appId);
+    Object.assign(a, {lots, fundedByMe:funded, commissionPercent:commission, fundingSource});
+  } else {
+    state.applications.push({id:uid(), ipoId, userId, lots, fundedByMe:funded, allotted:null, lotsAllotted:null, sellPrice:null, commissionPercent:commission, fundingSource});
+  }
+  saveState(); closeModal(); render(); showToast('Applicant saved');
+}
+function openSellModal(appId, ipo){
+  const a = state.applications.find(x=>x.id===appId);
+  openModal(`
+    <div class="modal-title">Sell Price — ${esc(ipo.name)}</div>
+    <label>Actual Sell Price per Share</label>
+    <input type="number" class="mono" id="f_sell" value="${ipo.listingPrice!=null?ipo.listingPrice:''}" placeholder="0">
+    <div class="helptext">Defaults to the IPO listing price — edit if this applicant sold at a different price.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSellPrice('${appId}')">Save & Settle</button>
+    </div>
+  `);
+}
+function saveSellPrice(appId){
+  const v = parseFloat(document.getElementById('f_sell').value);
+  if(isNaN(v)){ showToast('Enter a valid sell price'); return; }
+  const a = state.applications.find(x=>x.id===appId);
+  a.sellPrice = v;
+  saveState(); closeModal(); render(); showToast('Settled — profit calculated');
+}
+
+/* --- User modal --- */
+function openUserModal(userId){
+  const u = userId ? state.users.find(x=>x.id===userId) : null;
+  openModal(`
+    <div class="modal-title">${u?'Edit User':'Add User'}</div>
+    <label>Name</label>
+    <input type="text" id="f_uname" value="${u?esc(u.name):''}" placeholder="Friend's name" ${u&&u.isMe?'disabled':''}>
+    ${!(u&&u.isMe) ? `
+      <label>Default Commission % (on profit, when you fully fund their application)</label>
+      <input type="number" class="mono" id="f_ucomm" value="${u&&u.defaultCommission!=null?u.defaultCommission:25}">
+    ` : ''}
+    <label>Opening Balance (₹)${u&&u.isMe? ' — starting profit/cash you had before using this app' : ' — what they already owed you before using this app (negative if you owed them)'}</label>
+    <input type="number" class="mono" id="f_uopen" value="${u&&u.openingBalance!=null?u.openingBalance:0}">
+    <div class="divider" style="margin:18px 0 4px;"></div>
+    <div style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:10px; font-weight:600;">Demat / Broker Info</div>
+    <div class="field-row">
+      <div>
+        <label>PAN Number</label>
+        <input type="text" class="mono" id="f_upan" value="${u&&u.pan?esc(u.pan):''}" placeholder="ABCDE1234F" maxlength="10" style="text-transform:uppercase;">
+      </div>
+      <div>
+        <label>TPIN</label>
+        <input type="password" class="mono" id="f_utpin" value="${u&&u.tpin?esc(u.tpin):''}" placeholder="••••••" maxlength="6">
+      </div>
+    </div>
+    <div class="helptext">Stored locally only. Never shared or transmitted.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser('${userId||''}')">Save</button>
+    </div>
+    ${u&&!u.isMe? `<button class="btn btn-danger" style="margin-top:10px;" onclick="deleteUser('${userId}')">Delete User</button>`:''}
+  `);
+}
+function saveUser(userId){
+  const name = document.getElementById('f_uname').value.trim();
+  const commEl = document.getElementById('f_ucomm');
+  const comm = commEl ? parseFloat(commEl.value) : null;
+  const opening = parseFloat(document.getElementById('f_uopen').value)||0;
+  const pan = (document.getElementById('f_upan').value||'').trim().toUpperCase() || null;
+  const tpin = (document.getElementById('f_utpin').value||'').trim() || null;
+  if(!name){ showToast('Enter a name'); return; }
+  if(pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)){ showToast('PAN format: ABCDE1234F'); return; }
+  if(userId){
+    const u = state.users.find(x=>x.id===userId);
+    if(!u.isMe){ u.name = name; u.defaultCommission = isNaN(comm)?25:comm; }
+    u.openingBalance = opening;
+    u.pan = pan; u.tpin = tpin;
+  } else {
+    state.users.push({id:uid(), name, isMe:false, defaultCommission:isNaN(comm)?25:comm, openingBalance:opening, pan, tpin});
+  }
+  saveState(); closeModal(); render(); showToast('User saved');
+}
+function deleteUser(userId){
+  const bal = userBalance(userId);
+  let msg = 'Delete this user? Their applications and transfers will also be removed.';
+  if(Math.abs(bal.net) > 0.5){
+    msg = bal.net>0
+      ? `${state.users.find(u=>u.id===userId)?.name||'This user'} still owes you ${fmtMoney(bal.net)}. Deleting removes that record permanently. Continue?`
+      : `You still owe ${state.users.find(u=>u.id===userId)?.name||'this user'} ${fmtMoney(-bal.net)}. Deleting removes that record permanently. Continue?`;
+  }
+  if(!confirm(msg)) return;
+  state.users = state.users.filter(u=>u.id!==userId);
+  state.applications = state.applications.filter(a=>a.userId!==userId);
+  state.transactions = state.transactions.filter(t=>t.fromUserId!==userId && t.toUserId!==userId);
+  saveState(); closeModal(); userDetailId=null; render(); showToast('User deleted');
+}
+
+/* --- Transaction modal (flexible: any user -> any user) --- */
+function openTxnModal(defaultToUserId, txnId, prefill){
+  const existing = txnId ? state.transactions.find(t=>t.id===txnId) : null;
+  editingTxnId = txnId || null;
+  const me = state.users.find(u=>u.isMe);
+  let fromId, toId, amount = '', date = todayISO(), note = '';
+  if(existing){ fromId=existing.fromUserId; toId=existing.toUserId; amount=existing.amount; date=existing.date; note=existing.note||''; }
+  else if(prefill){ fromId=prefill.fromUserId; toId=prefill.toUserId; amount=prefill.amount; note=prefill.note||''; }
+  else { fromId = me?me.id:''; toId = defaultToUserId || ''; }
+
+  const opts = (selId) => state.users.map(u=>`<option value="${u.id}" ${u.id===selId?'selected':''}>${esc(u.name)}${u.isMe?' (You)':''}</option>`).join('');
+
+  openModal(`
+    <div class="modal-title">${existing? 'Edit Transfer' : 'Log Money Transfer'}</div>
+    <div class="field-row">
+      <div><label>From</label><select id="f_from">${opts(fromId)}</select></div>
+      <div><label>To</label><select id="f_to">${opts(toId)}</select></div>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="width:auto; margin-top:9px;" onclick="swapFromTo()">⇅ Swap From / To</button>
+    <label>Amount (₹)</label>
+    <input type="number" class="mono" id="f_tamt" value="${amount}" placeholder="0">
+    <label>Date</label>
+    <input type="date" id="f_tdate" value="${date}">
+    <label>Note (optional)</label>
+    <input type="text" id="f_tnote" value="${esc(note)}" placeholder="e.g. Advance for next IPO">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTxn()">Save</button>
+    </div>
+    ${existing? `<button class="btn btn-danger" style="margin-top:10px;" onclick="deleteTxn('${existing.id}')">Delete Transfer</button>`:''}
+  `);
+}
+function swapFromTo(){
+  const f = document.getElementById('f_from'), t = document.getElementById('f_to');
+  const tmp = f.value; f.value = t.value; t.value = tmp;
+}
+function saveTxn(){
+  const fromUserId = document.getElementById('f_from').value;
+  const toUserId = document.getElementById('f_to').value;
+  const amount = parseFloat(document.getElementById('f_tamt').value)||0;
+  const date = document.getElementById('f_tdate').value || todayISO();
+  const note = document.getElementById('f_tnote').value.trim();
+  if(!fromUserId || !toUserId){ showToast('Select both users'); return; }
+  if(fromUserId===toUserId){ showToast('From and To must be different'); return; }
+  if(amount<=0){ showToast('Enter an amount'); return; }
+  if(editingTxnId){
+    const t = state.transactions.find(x=>x.id===editingTxnId);
+    Object.assign(t, {fromUserId, toUserId, amount, date, note});
+  } else {
+    state.transactions.push({id:uid(), fromUserId, toUserId, amount, date, note});
+  }
+  editingTxnId = null;
+  saveState(); closeModal(); render(); showToast('Transfer saved');
+}
+function deleteTxn(txnId){
+  if(!confirm('Delete this transfer record?')) return;
+  state.transactions = state.transactions.filter(t=>t.id!==txnId);
+  editingTxnId = null;
+  saveState(); closeModal(); render(); showToast('Transfer deleted');
+}
+
+/* ============================= INIT ============================= */
+loadState();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
