@@ -1,0 +1,3648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Aryan's IPO Manager Software</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='64' y2='64' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%2322d3ee'/%3E%3Cstop offset='1' stop-color='%2334d399'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='12' fill='%23000000'/%3E%3Crect x='2' y='2' width='60' height='60' rx='11' fill='none' stroke='url(%23g)' stroke-width='2' opacity='0.5'/%3E%3Ctext x='7' y='43' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='26' letter-spacing='1' fill='url(%23g)'%3EIPO%3C/text%3E%3Cline x1='7' y1='49' x2='57' y2='49' stroke='url(%23g)' stroke-width='2' stroke-linecap='round' opacity='0.5'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Aryan's IPO Manager">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000000;
+    --bg-elev:#121212;
+    --bg-elev-2:#1a1a1a;
+    --border:#2a2a2a;
+    --border-soft:#1e1e1e;
+    --text:#ededec;
+    --text-dim:#8f8f95;
+    --text-faint:#5c5c62;
+    --gold:#2dd4bf;
+    --gold-dim:#1f9c8c;
+    --gold-grad:linear-gradient(135deg,#22d3ee,#34d399);
+    --profit:#5fd188;
+    --loss:#f0685f;
+    --pending:#7a7a82;
+    --radius:14px;
+    --radius-sm:9px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter',sans-serif;
+    padding-bottom:calc(96px + env(safe-area-inset-bottom));
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums;}
+  .disp{font-family:'Space Grotesk',sans-serif;}
+  ::selection{background:var(--gold); color:#000000;}
+  a{color:inherit;}
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+
+  header.topbar{
+    position:sticky; top:0; z-index:20;
+    background:rgba(0,0,0,0.88); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-soft);
+    padding:18px 20px 14px;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand .mark{
+    width:44px; height:36px; border-radius:9px;
+    background:#000000; border:1.5px solid var(--gold-dim);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; box-shadow:0 0 0 1px rgba(45,212,191,0.10), 0 2px 8px rgba(0,0,0,0.5);
+  }
+  .brand .mark svg{ display:block; }
+  .brand h1{font-family:'Space Grotesk',sans-serif; font-size:17px; margin:0; font-weight:600; letter-spacing:0.2px;}
+  .brand .sub{font-size:11px; color:var(--text-faint); margin-top:1px;}
+  .page-title{font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:600; margin:2px 0 4px;}
+  .page-sub{font-size:12.5px; color:var(--text-dim); margin-bottom:0;}
+
+  main{max-width:640px; margin:0 auto; padding:18px 16px calc(96px + env(safe-area-inset-bottom));}
+
+  /* Bottom nav */
+  nav.tabbar{
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    background:rgba(0,0,0,0.92); backdrop-filter:blur(14px);
+    border-top:1px solid var(--border-soft);
+    display:flex; padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+  nav.tabbar button{
+    flex:1; background:none; border:none; color:var(--text-faint);
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:6px 2px; font-family:'Inter',sans-serif; font-size:10.5px; font-weight:500;
+    cursor:pointer; border-radius:10px; transition:color .15s;
+  }
+  nav.tabbar button.active{color:var(--gold);}
+  nav.tabbar svg{width:20px; height:20px;}
+
+  /* Cards */
+  .card{
+    background:var(--bg-elev); border:1px solid var(--border-soft);
+    border-radius:var(--radius); padding:16px; margin-bottom:12px;
+  }
+  .card-tight{padding:14px;}
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+  .stat{
+    background:var(--bg-elev); border:1px solid var(--border-soft); border-radius:var(--radius-sm);
+    padding:13px 14px;
+  }
+  .stat .label{font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px;}
+  .stat .value{font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:600; font-variant-numeric:tabular-nums;}
+  .stat .value.profit{color:var(--profit);}
+  .stat .value.loss{color:var(--loss);}
+  .stat .value.gold{color:var(--gold);}
+
+  .section-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-faint);
+    margin:20px 2px 10px; font-weight:600;
+  }
+  .section-label:first-child{margin-top:0;}
+
+  .row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .list-item{
+    background:var(--bg-elev); border:1px solid var(--border-soft); border-radius:var(--radius);
+    padding:14px 15px; margin-bottom:9px; cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .list-item:active{background:var(--bg-elev-2);}
+  .list-item .title{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:15px;}
+  .list-item .meta{font-size:11.5px; color:var(--text-dim); margin-top:3px;}
+  .list-item .right{text-align:right;}
+
+  .badge{
+    display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600;
+    padding:3px 9px; border-radius:99px; text-transform:uppercase; letter-spacing:0.4px;
+    border:1px solid var(--border);
+  }
+  .badge .dot{width:6px; height:6px; border-radius:50%;}
+  .badge.upcoming{color:#8fa3d4;} .badge.upcoming .dot{background:#8fa3d4;}
+  .badge.open{color:var(--gold);} .badge.open .dot{background:var(--gold);}
+  .badge.pending{color:var(--pending);} .badge.pending .dot{background:var(--pending);}
+  .badge.allotted{color:#7fb9e8;} .badge.allotted .dot{background:#7fb9e8;}
+  .badge.listed{color:var(--profit);} .badge.listed .dot{background:var(--profit);}
+
+  .empty{
+    text-align:center; padding:44px 20px; color:var(--text-faint);
+  }
+  .empty .icon{font-size:30px; margin-bottom:10px; opacity:0.5;}
+  .empty .msg{font-size:13px; line-height:1.5;}
+
+  /* Buttons */
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px;
+    border-radius:11px; padding:12px 18px; border:none; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    transition:transform .1s, opacity .15s; width:100%;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--gold-grad); color:#00201c; font-weight:700;}
+  .btn-secondary{background:var(--bg-elev-2); color:var(--text); border:1px solid var(--border);}
+  .btn-ghost{background:transparent; color:var(--text-dim); border:1px solid var(--border-soft);}
+  .btn-danger{background:transparent; color:var(--loss); border:1px solid rgba(240,104,95,0.3);}
+  .btn-sm{padding:8px 12px; font-size:12.5px; width:auto;}
+  .fab{
+    position:fixed; right:18px; bottom:88px; z-index:25;
+    width:52px; height:52px; border-radius:16px; background:var(--gold-grad); color:#00201c;
+    border:none; font-size:26px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 24px rgba(45,212,191,0.28); cursor:pointer; line-height:0;
+  }
+
+  /* Forms */
+  label{display:block; font-size:11.5px; color:var(--text-dim); margin:14px 0 6px; font-weight:500;}
+  label:first-child{margin-top:0;}
+  input[type=text], input[type=number], input[type=date], select, textarea{
+    width:100%; background:var(--bg-elev-2); border:1px solid var(--border);
+    color:var(--text); border-radius:10px; padding:11px 13px; font-size:14.5px;
+    font-family:'Inter',sans-serif; outline:none;
+  }
+  input.mono, .mono-input{font-family:'JetBrains Mono',monospace;}
+  input:focus, select:focus, textarea:focus{border-color:var(--gold-dim);}
+  input[type=date]{color-scheme:dark;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .helptext{font-size:11px; color:var(--text-faint); margin-top:5px;}
+  .toggle-row{display:flex; gap:8px; margin-top:0;}
+  .toggle-btn{
+    flex:1; background:var(--bg-elev-2); border:1px solid var(--border); color:var(--text-dim);
+    border-radius:10px; padding:10px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .toggle-btn.active{background:rgba(45,212,191,0.14); border-color:var(--gold-dim); color:var(--gold);}
+  .chip-list{display:flex; flex-wrap:wrap; gap:7px; margin-top:8px;}
+  .chip{
+    background:var(--bg-elev-2); border:1px solid var(--border); border-radius:99px;
+    padding:6px 10px 6px 12px; font-size:12px; display:flex; align-items:center; gap:7px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .chip .x{cursor:pointer; color:var(--text-faint); font-size:14px;}
+  .date-add-row{display:flex; gap:8px;}
+  .date-add-row input{flex:1;}
+
+  /* Modal */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(2px);
+    z-index:50; display:flex; align-items:flex-end; justify-content:center;
+  }
+  .modal{
+    background:var(--bg-elev); border:1px solid var(--border); border-top-left-radius:20px; border-top-right-radius:20px;
+    width:100%; max-width:640px; max-height:88vh; overflow-y:auto; padding:8px 18px 22px;
+    animation:slideup .22s ease-out;
+  }
+  @keyframes slideup{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .modal-handle{width:36px; height:4px; background:var(--border); border-radius:99px; margin:10px auto 14px;}
+  .modal-title{font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:600; margin-bottom:4px;}
+  .modal-actions{display:flex; gap:10px; margin-top:20px;}
+
+  /* Tables */
+  .tbl{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .tbl th{
+    text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;
+    color:var(--text-faint); font-weight:600; padding:0 8px 8px 0; border-bottom:1px solid var(--border-soft);
+  }
+  .tbl td{padding:9px 8px 9px 0; border-bottom:1px solid var(--border-soft); vertical-align:middle;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .app-row{background:var(--bg-elev-2); border-radius:12px; padding:13px 14px; margin-bottom:9px; border:1px solid var(--border-soft);}
+  .app-row .name{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px;}
+  .app-row .grid{display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin-top:10px; font-size:12px;}
+  .app-row .grid .k{color:var(--text-faint); font-size:10.5px; text-transform:uppercase; letter-spacing:0.4px;}
+  .app-row .grid .v{font-family:'JetBrains Mono',monospace; margin-top:2px;}
+  .app-row .actions{display:flex; gap:8px; margin-top:12px;}
+
+  .divider{height:1px; background:var(--border-soft); margin:14px 0;}
+  .tab-strip{display:flex; gap:6px; margin-bottom:16px; background:var(--bg-elev); padding:4px; border-radius:12px; border:1px solid var(--border-soft);}
+  .tab-strip button{
+    flex:1; background:none; border:none; color:var(--text-dim); font-size:12.5px; font-weight:600;
+    padding:9px 4px; border-radius:9px; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .tab-strip button.active{background:var(--bg-elev-2); color:var(--gold);}
+
+  .avatar{
+    width:38px; height:38px; border-radius:10px; background:var(--bg-elev-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif;
+    font-weight:600; font-size:14px; color:var(--gold); flex-shrink:0;
+  }
+  .txn-item{display:flex; align-items:center; gap:11px; padding:11px 0; border-bottom:1px solid var(--border-soft);}
+  .txn-item:last-child{border-bottom:none;}
+  .txn-dot{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;}
+  .txn-dot.out{background:rgba(240,104,95,0.12); color:var(--loss);}
+  .txn-dot.in{background:rgba(95,209,136,0.12); color:var(--profit);}
+  .toast{
+    position:fixed; bottom:92px; left:50%; transform:translateX(-50%); z-index:60;
+    background:var(--bg-elev-2); border:1px solid var(--border); color:var(--text); font-size:12.5px;
+    padding:10px 16px; border-radius:99px; opacity:0; transition:opacity .25s; pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+  .install-note{font-size:11px; color:var(--text-faint); line-height:1.5; padding:12px 14px; background:var(--bg-elev); border:1px dashed var(--border); border-radius:12px;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="mark">
+      <svg width="38" height="22" viewBox="0 0 38 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="brandGrad" x1="0" y1="0" x2="38" y2="22" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#22d3ee"/>
+            <stop offset="1" stop-color="#34d399"/>
+          </linearGradient>
+        </defs>
+        <text x="1" y="17" font-family="'Space Grotesk', 'Inter', sans-serif" font-weight="700" font-size="16" letter-spacing="1" fill="url(#brandGrad)">IPO</text>
+        <line x1="1" y1="20" x2="37" y2="20" stroke="url(#brandGrad)" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Aryan's IPO Manager</h1>
+      <div class="sub" id="headerSub">IPO applications, allotments &amp; settlements</div>
+    </div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<button class="fab" id="fab" style="display:none;">+</button>
+
+<nav class="tabbar">
+  <button data-tab="dashboard" class="tab-btn active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l2-2 4 4 8-8 4 4"/><path d="M3 20h18" stroke-opacity="0.4"/></svg>
+    Dashboard
+  </button>
+  <button data-tab="ipos" class="tab-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v0"/></svg>
+    IPOs
+  </button>
+  <button data-tab="users" class="tab-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 8.5a3 3 0 110 5.9M21.5 20c0-2.9-1.9-5.1-4.5-5.8"/></svg>
+    Users
+  </button>
+  <button data-tab="reports" class="tab-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
+    Reports
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="importFileInput" accept="application/json" style="display:none;">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+/* ============================= STATE ============================= */
+let state = { users: [], ipos: [], applications: [], transactions: [], withdrawals: [], deposits: [] };
+let ready = false;
+let activeTab = 'dashboard';
+let ipoDetailId = null;
+let userDetailId = null;
+let ipoDetailSubTab = 'apps';
+let ipoSearchQuery = '';
+let ipoStatusFilter = 'active';
+let userSearchQuery = '';
+let editingTxnId = null;
+
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmtMoney = n => {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const neg = n < 0; n = Math.abs(n);
+  const s = n.toLocaleString('en-IN', {maximumFractionDigits:0});
+  return (neg?'-':'') + '₹' + s;
+};
+const fmtDate = iso => { if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); };
+const fmtDateShort = iso => { if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}); };
+const clamp0 = n => Math.max(0, n||0);
+
+/* ============================= STORAGE ============================= */
+const STORAGE_KEY = 'lotledger-app-state';
+const hasArtifactStorage = (typeof window!=='undefined' && window.storage && typeof window.storage.get==='function');
+
+async function storageGet(key){
+  if(hasArtifactStorage){
+    try{ return await window.storage.get(key, false); }catch(e){ /* fall through to localStorage */ }
+  }
+  try{
+    const raw = localStorage.getItem(key);
+    return raw!=null ? {value: raw} : null;
+  }catch(e){ return null; }
+}
+async function storageSet(key, value){
+  if(hasArtifactStorage){
+    try{ await window.storage.set(key, value, false); return true; }catch(e){ /* fall through */ }
+  }
+  try{ localStorage.setItem(key, value); return true; }
+  catch(e){ return false; }
+}
+
+async function loadState(){
+  try{
+    const res = await storageGet(STORAGE_KEY);
+    if(res && res.value){ state = JSON.parse(res.value); }
+  }catch(e){ /* no data yet */ }
+  if(!state.users.some(u=>u.isMe)){
+    state.users.unshift({id:uid(), name:'Aryan', isMe:true, defaultCommission:25, openingBalance:0});
+  }
+  // One-time rename: the account owner used to default to "Me" — rename to Aryan if untouched
+  const meUser = state.users.find(u=>u.isMe);
+  if(meUser && meUser.name==='Me') meUser.name = 'Aryan';
+  state.users.forEach(u=>{ if(u.openingBalance==null) u.openingBalance = 0; });
+  // Migrate old transaction schema {userId, type:'given'|'received'} to {fromUserId, toUserId}
+  const me = state.users.find(u=>u.isMe);
+  state.transactions = (state.transactions||[]).map(t=>{
+    if(t.fromUserId!=null && t.toUserId!=null) return t;
+    if(t.type==='given') return {id:t.id, date:t.date, note:t.note, amount:t.amount, fromUserId: me?me.id:null, toUserId:t.userId};
+    if(t.type==='received') return {id:t.id, date:t.date, note:t.note, amount:t.amount, fromUserId:t.userId, toUserId: me?me.id:null};
+    return t;
+  }).filter(t=>t.fromUserId && t.toUserId);
+  if(!Array.isArray(state.withdrawals)) state.withdrawals = [];
+  if(!Array.isArray(state.deposits)) state.deposits = [];
+  ready = true;
+  maybeDailyAutoBackup();
+  render();
+}
+let saveTimer=null;
+function saveState(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    const ok = await storageSet(STORAGE_KEY, JSON.stringify(state));
+    if(!ok) showToast('Save failed — changes kept locally this session');
+  }, 120);
+}
+// Fix 1: the debounce above means a very-recent edit can still be sitting
+// unsaved in memory if the app is closed/backgrounded right away. Flush
+// immediately (bypassing the debounce) whenever the app is about to be
+// hidden or unloaded, so nothing gets lost.
+function flushSaveNow(){
+  if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; }
+  try{
+    const json = JSON.stringify(state);
+    localStorage.setItem(STORAGE_KEY, json); // synchronous, always attempted first
+    if(hasArtifactStorage){ window.storage.set(STORAGE_KEY, json, false).catch(()=>{}); }
+  }catch(e){ /* best effort — nothing more we can do at unload time */ }
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushSaveNow(); });
+window.addEventListener('pagehide', flushSaveNow);
+window.addEventListener('beforeunload', flushSaveNow);
+
+// Fix 2: backup reminder — track when the user last exported a backup so the
+// dashboard can nudge them if it's been a while. Stored outside `state` (a
+// plain localStorage key) since it's local UI metadata, not app data that
+// should round-trip through export/import.
+const LAST_BACKUP_KEY = 'lotledger-last-backup-at';
+function getLastBackupAt(){
+  try{ const v = localStorage.getItem(LAST_BACKUP_KEY); return v ? new Date(v) : null; }catch(e){ return null; }
+}
+function setLastBackupNow(){
+  try{ localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString()); }catch(e){}
+}
+function backupReminderText(){
+  const last = getLastBackupAt();
+  if(!last) return {text:'No backup taken yet', urgent:true};
+  const days = Math.floor((Date.now() - last.getTime()) / 86400000);
+  if(days<=0) return {text:'Backed up today', urgent:false};
+  if(days===1) return {text:'Last backup: 1 day ago', urgent:false};
+  return {text:`Last backup: ${days} days ago`, urgent: days>=14};
+}
+
+function showToast(msg, duration){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), duration||1800);
+}
+
+function exportData(){
+  try{
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aryans-ipo-manager-backup-${todayISO()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    setLastBackupNow();
+    if(document.getElementById('backupReminderText')) renderDashboardBackupReminderOnly();
+    showToast('Backup downloaded');
+  }catch(e){ showToast('Export failed'); }
+}
+// Fix 3: automatic rotating restore points — a safety net independent of
+// manual "Export Backup". Keeps the last 3 snapshots in localStorage so a
+// bad import (or any other mistake) can be undone even if the person forgot
+// to export first. Snapshots are taken automatically right before an import
+// is applied, and at most once per day on app load.
+const AUTO_BACKUP_KEY = 'lotledger-autobackups';
+function getAutoBackups(){
+  try{ return JSON.parse(localStorage.getItem(AUTO_BACKUP_KEY)||'[]'); }catch(e){ return []; }
+}
+function pushAutoBackup(reason){
+  try{
+    const list = getAutoBackups();
+    list.push({ts: new Date().toISOString(), reason: reason||'auto', data: JSON.stringify(state)});
+    while(list.length>3) list.shift(); // keep only the 3 most recent
+    localStorage.setItem(AUTO_BACKUP_KEY, JSON.stringify(list));
+  }catch(e){ /* best effort — e.g. storage full; skip silently */ }
+}
+function maybeDailyAutoBackup(){
+  const list = getAutoBackups();
+  const last = list[list.length-1];
+  const today = todayISO();
+  if(!last || (last.ts||'').slice(0,10) !== today) pushAutoBackup('daily');
+}
+function restoreAutoBackup(index){
+  const list = getAutoBackups();
+  const entry = list[index];
+  if(!entry) return;
+  const when = new Date(entry.ts).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+  confirmAction(`Restore the automatic backup from ${when}? This will replace all current data with that snapshot.`, ()=>{
+    try{
+      pushAutoBackup('before-restore'); // so restoring isn't itself a one-way door — you can undo a wrong restore too
+      state = JSON.parse(entry.data);
+      flushSaveNow(); render(); showToast('Restore point loaded');
+    }catch(e){ showToast('Could not restore that backup'); }
+  }, 'Restore');
+}
+
+// Fix 9: validate a backup file's shape before trusting it, so an unrelated
+// or corrupted JSON file doesn't silently load broken data into the app.
+function validateBackupShape(parsed){
+  if(!parsed || typeof parsed!=='object' || Array.isArray(parsed)) return 'That file is not a valid backup (not a JSON object).';
+  if(!Array.isArray(parsed.users)) return 'That file is missing a "users" list — this may not be a Lot & Ledger / IPO Manager backup.';
+  if(!Array.isArray(parsed.ipos)) return 'That file is missing an "ipos" list — this may not be a Lot & Ledger / IPO Manager backup.';
+  const arrayFields = ['applications','transactions','withdrawals','deposits'];
+  for(const f of arrayFields){ if(parsed[f]!=null && !Array.isArray(parsed[f])) return `"${f}" in that file is not a list — the backup looks corrupted.`; }
+  for(const u of parsed.users){ if(!u || typeof u!=='object' || !u.id || typeof u.name!=='string') return 'One or more users in that file are missing an id/name — the backup looks corrupted.'; }
+  for(const i of parsed.ipos){ if(!i || typeof i!=='object' || !i.id || typeof i.name!=='string') return 'One or more IPOs in that file are missing an id/name — the backup looks corrupted.'; }
+  const userIds = new Set(parsed.users.map(u=>u.id));
+  const ipoIds = new Set(parsed.ipos.map(i=>i.id));
+  if(Array.isArray(parsed.applications)){
+    for(const a of parsed.applications){
+      if(!a || typeof a!=='object' || !a.id) return 'One or more applications in that file are missing an id — the backup looks corrupted.';
+      if(a.userId && !userIds.has(a.userId)) return 'An application in that file references a user that isn\'t in the same backup — the file looks corrupted or mismatched.';
+      if(a.ipoId && !ipoIds.has(a.ipoId)) return 'An application in that file references an IPO that isn\'t in the same backup — the file looks corrupted or mismatched.';
+    }
+  }
+  return null; // shape looks valid
+}
+document.getElementById('importFileInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const shapeError = validateBackupShape(parsed);
+    if(shapeError){ showToast(shapeError, 5000); return; }
+    confirmAction('Import this backup? It will replace all current data in the app.', ()=>{
+      pushAutoBackup('before-import'); // safety net — lets you undo this if the import turns out wrong
+      // Restore all known keys; unknown keys from newer versions are preserved as-is
+      state = {
+        users: parsed.users||[], ipos: parsed.ipos||[],
+        applications: parsed.applications||[], transactions: parsed.transactions||[],
+        withdrawals: parsed.withdrawals||[], deposits: parsed.deposits||[]
+      };
+      // Carry forward any extra top-level keys from newer backup versions
+      Object.keys(parsed).forEach(k=>{
+        if(!['users','ipos','applications','transactions','withdrawals','deposits'].includes(k)){
+          state[k] = parsed[k];
+        }
+      });
+      if(!state.users.some(u=>u.isMe)) state.users.unshift({id:uid(), name:'Aryan', isMe:true, defaultCommission:25});
+      saveState(); render(); showToast('Backup imported successfully (' + state.users.length + ' users, ' + state.ipos.length + ' IPOs)');
+    }, 'Import');
+  }catch(err){ showToast('Could not read that file — make sure it is a valid backup JSON.'); }
+});
+
+/* ============================= CALCULATIONS ============================= */
+function ipoStatus(ipo){
+  const t = todayISO();
+  const dates = (ipo.biddingDates||[]).slice().sort();
+  if(dates.length){
+    if(t < dates[0]) return 'upcoming';
+    if(t <= dates[dates.length-1]) return 'open';
+  }
+  if(ipo.allotmentDate && t < ipo.allotmentDate) return 'pending';
+  if(ipo.listingDate && t < ipo.listingDate) return 'allotted';
+  if(ipo.listingDate && t >= ipo.listingDate) return 'listed';
+  return 'pending';
+}
+const STATUS_LABEL = {upcoming:'Upcoming', open:'Bidding Open', pending:'Allotment Pending', allotted:'Allotted · Awaiting Listing', listed:'Listed'};
+
+function totalCost(app, ipo){ return (app.lots||0) * (ipo.lotSize||0) * (ipo.pricePerShare||0); }
+
+// Expected profit per share/lot based on GMP (Grey Market Premium) entered manually for the IPO.
+// This is a projection only, distinct from computeApp()'s actual realized profit after sale.
+function expectedProfitPerShare(ipo){ return ipo.gmp!=null ? ipo.gmp : null; }
+function expectedProfitPerLot(ipo){ const gmp = expectedProfitPerShare(ipo); return gmp!=null ? gmp*(ipo.lotSize||0) : null; }
+function expectedProfitForApp(app, ipo){
+  const gmp = expectedProfitPerShare(ipo);
+  if(gmp==null) return null;
+  const lots = (app.lotsAllotted!=null? app.lotsAllotted : app.lots) || 0;
+  return gmp * lots * (ipo.lotSize||0);
+}
+function expectedProfitForIpo(ipo){
+  const gmp = expectedProfitPerShare(ipo);
+  if(gmp==null) return null;
+  const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+  return apps.reduce((sum,a)=> sum + (expectedProfitForApp(a, ipo)||0), 0);
+}
+function lastApplyDate(ipo){
+  const dates = (ipo.biddingDates||[]).slice().sort();
+  return dates.length ? dates[dates.length-1] : null;
+}
+
+// Determine profit-sharing mode: 'commission' (all profit is mine, user gets a % commission),
+// 'assisted' (both invest their own real stake — Aryan from Account A, user from Account B — each
+// principal returns to its own account, but PROFIT is split by a flat commission %, not by ratio),
+// or 'shared' (profit split by each party's invested-amount ratio, with an optional bonus top-up to the user).
+// Funding source itself is no longer a separate concept — every application is applied through the
+// user's own account; this only governs how PROFIT is split, and therefore how much of the applied
+// amount is "mine" (aryanInvested) vs the user's own money.
+function profitModeOf(app){
+  if(app.profitMode) return app.profitMode;
+  // Backward-compat migration from the old 3-way fundingSource field ('me' | 'shared' | 'own')
+  const src = app.fundingSource;
+  if(src==='own') return 'shared';
+  if(src==='shared') return 'shared';
+  return 'commission';
+}
+
+// Full settlement computation for a single application
+function computeApp(app, ipo, user){
+  const fullCost = totalCost(app, ipo);
+  const isMe = user && user.isMe;
+  const mode = isMe ? 'commission' : profitModeOf(app);
+  const funded = app.fundedByMe||0; // amount I (Aryan) put into this application
+  // amountGiven = actual cash handed over, which may exceed what was applied (fundedByMe).
+  // Falls back to funded for older records saved before this field existed.
+  const given = app.amountGiven!=null ? app.amountGiven : funded;
+  const extraGiven = clamp0(given - funded); // cash given but never applied to this IPO — always owed back
+  const userInvested = (!isMe && mode==='assisted') ? clamp0(app.userInvested||0) : 0; // user's own stake in Assisted mode (Account B)
+  const out = {
+    fullCost, isMe, profitMode: mode, aryanInvested: funded, userInvested, extraGiven,
+    status: 'pending', // pending | refunded | holding | settled
+    X: 0, nEff: 0, sEff: 0, unallottedRefund: 0,
+    proceeds: null, profit: null, commission: 0, myProfitShare: null, friendShare: null,
+    owedToMe: 0
+  };
+  if(app.allotted === false){
+    // Not allotted: the broker refunds the full applied amount directly into the USER's own account,
+    // plus any extra cash given is owed back — this sits as a receivable in the user's tracked balance
+    // until Aryan actually collects it via a real transfer, not credited to Aryan's account automatically.
+    out.status = 'refunded';
+    out.X = 0; out.unallottedRefund = funded;
+    out.owedToMe = isMe ? 0 : (funded + extraGiven);
+    return out;
+  }
+  if(app.allotted !== true){
+    // Still awaiting allotment result — money funded is already out of pocket and into the applicant's
+    // application (blocked), so it's a live receivable. Extra cash given beyond what was applied is
+    // owed back regardless of allotment outcome.
+    out.status = 'pending';
+    out.owedToMe = isMe ? 0 : (funded + extraGiven);
+    return out;
+  }
+  // allotted
+  const lotsAllotted = (app.lotsAllotted!=null? app.lotsAllotted : app.lots) || 0;
+  const X = lotsAllotted * (ipo.lotSize||0) * (ipo.pricePerShare||0);
+  out.X = X;
+  const nEff = Math.min(funded, X);
+  const sEff = clamp0(X - nEff);
+  out.nEff = nEff; out.sEff = sEff;
+  out.unallottedRefund = clamp0(funded - nEff);
+
+  if(app.sellPrice === null || app.sellPrice === undefined || app.sellPrice === ''){
+    out.status = 'holding';
+    // Allotted but not yet listed/sold: this capital is BLOCKED — held in the user's account, not
+    // available to Aryan for funding a new application until it's actually sold and transferred back.
+    out.owedToMe = isMe ? 0 : (nEff + out.unallottedRefund + extraGiven);
+    return out;
+  }
+  // sold
+  out.status = 'settled';
+  const proceeds = lotsAllotted * (ipo.lotSize||0) * app.sellPrice;
+  const profit = proceeds - X;
+  out.proceeds = proceeds; out.profit = profit;
+
+  if(isMe){
+    // Self-applied: broker pays straight into Aryan's own account, no intermediary — realized instantly.
+    out.myProfitShare = profit;
+    out.owedToMe = 0;
+    return out;
+  }
+
+  if(mode==='commission'){
+    // All profit is mine; user earns a commission % of positive profit only.
+    const commPct = (app.commissionPercent!=null? app.commissionPercent : (user.defaultCommission||0));
+    const commission = profit > 0 ? profit * (commPct/100) : 0;
+    out.commission = commission;
+    out.myProfitShare = profit - commission;
+    out.friendShare = commission;
+  } else if(mode==='assisted'){
+    // Assisted mode: like Shared, both invest their own real stake — Aryan's (funded/aryanInvested)
+    // from Account A, the user's (userInvested = fullCost - funded) from Account B — and each
+    // principal returns to its own account exactly as invested, same as Shared. Unlike Shared,
+    // PROFIT is split by a flat commission % instead of the invested-amount ratio.
+    const commPct = (app.commissionPercent!=null? app.commissionPercent : (user.defaultCommission||0));
+    const friendShare = profit > 0 ? profit * (commPct/100) : 0;
+    out.commission = friendShare;
+    out.myProfitShare = profit - friendShare;
+    out.friendShare = friendShare;
+  } else {
+    // shared (default) -> profit split by investment ratio, then an optional flat bonus
+    // (extra amount Aryan chooses to give the user above their ratio-based share) shifts some of
+    // my share to the user.
+    let myShare = X>0 ? profit * (nEff/X) : 0;
+    let friendShare = X>0 ? profit * (sEff/X) : 0;
+    if(profit > 0){
+      const bonus = Math.min(clamp0(app.bonusToUser||0), Math.max(myShare,0));
+      myShare -= bonus;
+      friendShare += bonus;
+    }
+    out.myProfitShare = myShare;
+    out.friendShare = friendShare;
+    out.commission = 0;
+  }
+  // Everything owed to me sits in the user's account until they physically transfer it back:
+  // my principal returned (nEff + unallotted refund) + my profit share + any extra cash given.
+  // NOTE: in assisted mode, userInvested (Account B principal) is NOT included — it's the user's own
+  // money returned to their Account B, never owed to Aryan.
+  out.owedToMe = out.unallottedRefund + nEff + out.myProfitShare + extraGiven;
+  return out;
+}
+
+// Generalized, synchronized transfer ledger: for ANY user (including Aryan), sum every transaction
+// where they are the receiver (+amount) or the sender (-amount). Because this is recomputed live from
+// state.transactions, deleting a transfer automatically "undoes" it on both sides — there's nothing to
+// separately reverse.
+function transfersNet(userId){
+  let net = 0;
+  state.transactions.forEach(t=>{
+    if(t.toUserId===userId) net += t.amount;
+    if(t.fromUserId===userId) net -= t.amount;
+  });
+  return net;
+}
+
+// Same as transfersNet, but scoped to a single sub-account ('A' or 'B') of a non-Aryan user.
+// A transaction only affects a given sub-account total on the side(s) where its fromAccount/toAccount
+// tag matches — this is what lets internal A<->B moves (same user on both sides, different accounts)
+// correctly shift money between the two totals instead of netting to zero everywhere.
+function transfersNetAccount(userId, account){
+  let net = 0;
+  state.transactions.forEach(t=>{
+    if(t.toUserId===userId && t.toAccount===account) net += t.amount;
+    if(t.fromUserId===userId && t.fromAccount===account) net -= t.amount;
+  });
+  return net;
+}
+
+// account: optional 'A' | 'B' to scope to one sub-account. Legacy withdrawals recorded before the
+// two-account model (no `account` field) default to Account A for non-Aryan users, since everything
+// previously owed to Aryan through a user's tracked balance is what Account A now represents.
+function withdrawalsFor(userId, account){
+  return (state.withdrawals||[]).filter(w=>{
+    if(w.userId!==userId) return false;
+    if(account==null) return true;
+    return (w.account||'A')===account;
+  }).reduce((s,w)=>s+w.amount,0);
+}
+function depositsFor(userId){
+  return (state.deposits||[]).filter(d=>d.userId===userId).reduce((s,d)=>s+d.amount,0);
+}
+
+// ---- Two-account model for every non-Aryan user ----
+// Account A: Aryan's own money sitting with the user — every transfer Aryan sends them, plus Aryan's
+//   principal/profit from their settled or refunded applications that hasn't been transferred back yet.
+//   This is the ONLY account an application's Aryan-funded share is deducted from, and the ONLY account
+//   a "Transfer to Aryan" can draw from.
+// Account B: the user's OWN money — cash they've added themselves (Add Cash to Account), plus their own
+//   commission/profit share from settled applications. This is what their own share of a Shared
+//   Investment application is deducted from.
+// Both are wallets with a real, checkable balance (not an open-ended receivable): funding an application
+// actually removes money from whichever account(s) cover it while the application is unresolved, and the
+// money reappears in that account automatically once the application is refunded or settled — no manual
+// "return" step needed.
+function appAccountALock(app, ipo, user){
+  if(!user || user.isMe) return 0;
+  const c = computeApp(app, ipo, user);
+  let lock = c.extraGiven||0; // extra cash given beyond what was applied is always owed back, at every stage
+  if(c.status==='pending' || c.status==='holding') lock += (c.aryanInvested||0);
+  if(c.status==='settled') lock -= (c.myProfitShare||0); // profit is a net credit back into Account A
+  return lock;
+}
+function appAccountBLock(app, ipo, user){
+  if(!user || user.isMe) return 0;
+  const c = computeApp(app, ipo, user);
+  let lock = 0;
+  // Shared and Assisted modes both work identically here: the user's own stake (fullCost - aryanInvested,
+  // same value as userInvested in Assisted mode) is locked from Account B while pending/holding, and
+  // released — plus their profit share (ratio-based for Shared, commission-based for Assisted, both
+  // already computed into c.friendShare by computeApp) — once settled. Refunded releases the lock with
+  // no profit/loss on either side. Commission mode locks nothing from B (full cost is Aryan's, Account A only).
+  if(c.status==='pending' || c.status==='holding') lock += clamp0(c.fullCost - (c.aryanInvested||0));
+  if(c.status==='settled'){
+    const userProfit = c.profitMode==='commission' ? (c.commission||0) : (c.friendShare||0);
+    lock -= userProfit; // their commission/profit share is a net credit back into Account B
+  }
+  return lock;
+}
+// excludeAppId: when re-checking balance for an application being edited, pass its own id so its
+// existing (still-pending) commitment isn't counted against itself.
+function accountABalance(userId, excludeAppId){
+  const user = state.users.find(u=>u.id===userId);
+  if(!user || user.isMe) return 0;
+  let lock = 0;
+  state.applications.filter(a=>a.userId===userId).forEach(a=>{
+    if(excludeAppId && a.id===excludeAppId) return;
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    lock += appAccountALock(a, ipo, user);
+  });
+  return (user.openingBalance||0) + transfersNetAccount(userId,'A') - withdrawalsFor(userId,'A') - lock;
+}
+function accountBBalance(userId, excludeAppId){
+  const user = state.users.find(u=>u.id===userId);
+  if(!user || user.isMe) return 0;
+  let lock = 0;
+  state.applications.filter(a=>a.userId===userId).forEach(a=>{
+    if(excludeAppId && a.id===excludeAppId) return;
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    lock += appAccountBLock(a, ipo, user);
+  });
+  return depositsFor(userId) + transfersNetAccount(userId,'B') - withdrawalsFor(userId,'B') - lock;
+}
+
+function userBalance(userId){
+  const user = state.users.find(u=>u.id===userId);
+  if(!user || user.isMe) return {owed:0, transfers:0, withdrawn:0, net:0, opening:0, accountA:0, accountB:0};
+  const transfers = transfersNet(userId);
+  const withdrawn = withdrawalsFor(userId);
+  const opening = user.openingBalance||0;
+  const accountA = accountABalance(userId);
+  const accountB = accountBBalance(userId);
+  const net = accountA + accountB; // positive => total money currently tracked in their two accounts
+  // "Owed via IPOs" = what's currently owed right now, i.e. Account A itself (clamped at 0 — a negative
+  // Account A means Aryan owes them, not the other way round). This used to be a separate raw sum of every
+  // application's owedToMe regardless of status, which double-counted: a settled application's money stays
+  // in owedToMe forever even once its principal gets reused (rolled over) straight into a fresh application,
+  // so the same real rupees showed up twice. Account A already handles this correctly (a settled app's
+  // capital drops out the moment it's spent again on a new one, same fix as myDeployedCapital()), so reuse
+  // it directly instead of keeping a second, inconsistent number.
+  const owed = clamp0(accountA);
+  return {owed, transfers, withdrawn, net, opening, accountA, accountB};
+}
+
+// Capital currently tied up in an ONGOING IPO application (result not known yet) — for both Aryan's own
+// applications and friends' applications alike. Once an application settles or gets refunded, its money
+// is no longer "at risk in the market" — it just needs collecting back (friends: shows under Pending
+// Repayments once uncollected; Aryan's own: credits immediately via myOwnRealizedProfit) — so it correctly
+// drops out of this figure the moment a result comes in, rather than staying counted forever.
+function myDeployedCapital(){
+  let total = 0;
+  state.applications.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const user = state.users.find(u=>u.id===a.userId); if(!user) return;
+    const c = computeApp(a, ipo, user);
+    if(c.status!=='pending' && c.status!=='holding') return;
+    total += (c.aryanInvested||0) + (c.extraGiven||0);
+  });
+  return total;
+}
+
+// Profit realized directly into Aryan's own account from his own (isMe) settled applications — no
+// intermediary user account is involved, so this credits immediately at settlement.
+function myOwnRealizedProfit(){
+  let total = 0;
+  state.applications.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const user = state.users.find(u=>u.id===a.userId); if(!user || !user.isMe) return;
+    const c = computeApp(a, ipo, user);
+    if(c.status==='settled') total += (c.profit||0);
+  });
+  return total;
+}
+
+// What should actually reduce Aryan's own LIQUID balance — distinct from myDeployedCapital() (which is
+// the informational "how much is currently tied up in the field" figure shown on the dashboard).
+// For a FRIEND application, `aryanInvested` (fundedByMe) is money that only ever reached them because a
+// real "Log Transfer" topped up their Account A first — the app's own balance check on Add Applicant
+// enforces this, there's no other way to fund it. That transfer already reduced transfersNet(me), so
+// subtracting aryanInvested again here would double-count the exact same rupees. Only `extraGiven` (cash
+// handed over beyond the tracked funding — which the Add Applicant helptext explicitly says NOT to log as
+// a separate transfer) has no other place it's accounted for, so it alone still needs deducting here.
+// For Aryan's own (isMe) applications there's no intermediary transfer at all, so the full capital is
+// deducted here while pending/holding, exactly like myDeployedCapital().
+function myLiquidCapitalOut(){
+  let total = 0;
+  state.applications.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const user = state.users.find(u=>u.id===a.userId); if(!user) return;
+    const c = computeApp(a, ipo, user);
+    if(user.isMe){
+      const capital = (c.aryanInvested||0) + (c.extraGiven||0);
+      if(capital>0 && (c.status==='pending' || c.status==='holding')) total += capital;
+    } else {
+      if((c.extraGiven||0)>0) total += c.extraGiven;
+    }
+  });
+  return total;
+}
+
+function myTotals(){
+  let profitMine = 0, commissionEarnedByFriends = 0, outstanding = 0;
+  state.applications.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const user = state.users.find(u=>u.id===a.userId); if(!user) return;
+    const c = computeApp(a, ipo, user);
+    if(user.isMe && c.status==='settled') profitMine += (c.profit||0);
+    if(!user.isMe && c.status==='settled'){ profitMine += (c.myProfitShare||0); commissionEarnedByFriends += (c.commission||0); }
+  });
+  // Capital Deployed (dashboard, informational): money currently locked in an ONGOING application (result
+  // still pending) — see myDeployedCapital()'s own comment. This is a different question from what
+  // myAccountBalance() subtracts (myLiquidCapitalOut()), so the two are allowed to differ.
+  const deployed = myDeployedCapital();
+  state.users.filter(u=>!u.isMe).forEach(u=>{ outstanding += accountABalance(u.id); }); // only Account A counts as "owed back to Aryan" — Account B is the user's own money, never a repayment
+
+  // IPO-level counts
+  const activeIpos = state.ipos.filter(i=>!i.archived && ipoStatus(i)!=='listed');
+  const totalIpos = state.ipos.length;
+  const allottedIpos = state.ipos.filter(i=>{
+    const apps = state.applications.filter(a=>a.ipoId===i.id);
+    return apps.length>0 && apps.some(a=>a.allotted===true);
+  }).length;
+
+  // Fund given / returned — from the funding & repayment (money transfer) ledger, Me -> Users vs Users -> Me
+  const me = state.users.find(u=>u.isMe);
+  let fundGiven = 0, fundReturned = 0;
+  if(me){
+    state.transactions.forEach(t=>{
+      if(t.fromUserId===me.id && t.toUserId!==me.id) fundGiven += t.amount;
+      if(t.toUserId===me.id && t.fromUserId!==me.id) fundReturned += t.amount;
+    });
+  }
+
+  return {deployed, profitMine, commissionEarnedByFriends, outstanding,
+    totalIpos, activeIpos: activeIpos.length, allottedIpos, fundGiven, fundReturned};
+}
+
+// My Account = LIQUID cash actually in Aryan's own hands right now:
+// opening balance + cash deposited - cash withdrawn + net of real money transfers actually received/sent
+// - capital that has genuinely left Aryan's own pocket and isn't reflected anywhere else (myLiquidCapitalOut,
+//   see its own comment for why this is NOT the same as myDeployedCapital()) + Aryan's own realized profit.
+function myAccountBalance(){
+  const me = state.users.find(u=>u.isMe);
+  if(!me) return 0;
+  const opening = me.openingBalance||0;
+  const withdrawn = withdrawalsFor(me.id);
+  const deposited = depositsFor(me.id);
+  const transfers = transfersNet(me.id);
+  return opening + deposited - withdrawn + transfers - myLiquidCapitalOut() + myOwnRealizedProfit();
+}
+
+// Total value sitting in friends' accounts = the sum of Account A (Aryan's money with them) + Account B
+// (their own money) across every non-Aryan user.
+function totalInOthersAccounts(){
+  let total = 0;
+  state.users.filter(u=>!u.isMe).forEach(u=>{
+    total += accountABalance(u.id) + accountBBalance(u.id);
+  });
+  return total;
+}
+
+/* ============================= RENDER ROOT ============================= */
+function render(){
+  if(!ready) { document.getElementById('main').innerHTML = `<div class="empty"><div class="icon">⋯</div><div class="msg">Loading your ledger…</div></div>`; return; }
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===activeTab));
+  const fab = document.getElementById('fab');
+  const sub = document.getElementById('headerSub');
+  let html = '';
+  if(activeTab==='dashboard'){ fab.style.display='none'; sub.textContent='Overview'; html = renderDashboard(); }
+  else if(activeTab==='ipos'){
+    if(ipoDetailId){ fab.style.display='none'; sub.textContent='IPO detail'; html = renderIpoDetail(); }
+    else { fab.style.display='flex'; fab.onclick=()=>openIpoModal(); sub.textContent='All IPOs'; html = renderIposList(); }
+  }
+  else if(activeTab==='users'){
+    if(userDetailId){ fab.style.display='none'; sub.textContent='User detail'; html = renderUserDetail(); }
+    else { fab.style.display='flex'; fab.onclick=()=>openUserModal(); sub.textContent='Applicants & accounts'; html = renderUsersList(); }
+  }
+  else if(activeTab==='reports'){ fab.style.display='none'; sub.textContent='Reports'; html = renderReports(); }
+  document.getElementById('main').innerHTML = html;
+}
+
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    activeTab = b.dataset.tab; ipoDetailId=null; userDetailId=null; render();
+    window.scrollTo(0,0);
+  });
+});
+
+/* ============================= DASHBOARD ============================= */
+function renderDashboard(){
+  const t = myTotals();
+  const myAccount = myAccountBalance();
+  const othersTotal = totalInOthersAccounts();
+  const upcoming = state.ipos.slice().map(i=>({i, d: nextKeyDate(i)})).filter(x=>x.d).sort((a,b)=>a.d.date.localeCompare(b.d.date)).slice(0,5);
+  const watch = state.ipos.filter(i=>['upcoming','open','pending','allotted'].includes(ipoStatus(i)));
+
+  return `
+    <div class="section-label" style="margin-top:0;">Overview</div>
+    <div class="stat-grid">
+      <div class="stat"><div class="label">Total IPOs</div><div class="value">${t.totalIpos}</div></div>
+      <div class="stat"><div class="label">Active IPOs</div><div class="value">${t.activeIpos}</div></div>
+      <div class="stat"><div class="label">Allotted IPOs</div><div class="value">${t.allottedIpos}</div></div>
+      <div class="stat"><div class="label">Pending Repayments</div><div class="value ${t.outstanding>=0?'gold':'loss'}">${fmtMoney(t.outstanding)}</div></div>
+    </div>
+
+    <div class="section-label">Money</div>
+    <div class="stat-grid">
+      <div class="stat"><div class="label">My Account</div><div class="value ${myAccount>=0?'gold':'loss'}">${fmtMoney(myAccount)}</div></div>
+      <div class="stat"><div class="label">Total in Others' Accounts</div><div class="value gold">${fmtMoney(othersTotal)}</div></div>
+      <div class="stat"><div class="label">Capital Deployed</div><div class="value gold">${fmtMoney(t.deployed)}</div></div>
+      <div class="stat"><div class="label">My Total Profit</div><div class="value ${t.profitMine>=0?'profit':'loss'}">${fmtMoney(t.profitMine)}</div></div>
+      <div class="stat"><div class="label">Total Fund Given</div><div class="value">${fmtMoney(t.fundGiven)}</div></div>
+      <div class="stat"><div class="label">Total Fund Returned</div><div class="value">${fmtMoney(t.fundReturned)}</div></div>
+      <div class="stat"><div class="label">Commission Paid Out</div><div class="value">${fmtMoney(t.commissionEarnedByFriends)}</div></div>
+    </div>
+    <div class="helptext" style="margin:-6px 2px 16px;">My Account = your LIQUID cash only (opening balance + deposits − withdrawals ± real transfers − capital currently blocked in applications). Every other user has two tracked accounts: Account A (your money — transfers you've sent them, plus their settled profit/principal not yet transferred back) and Account B (their own money — cash they've added, plus their own profit share). Applying to an IPO deducts from A and/or B depending on the profit-sharing mode; nothing moves into your own account until you actually transfer it from Account A on their User page. Total in Others' Accounts = the sum of everyone's Account A + Account B.</div>
+
+    <div class="section-label">Individual User Profit</div>
+    ${(()=>{
+      const friends = state.users.filter(u=>!u.isMe);
+      if(!friends.length) return emptyBlock('No users yet', 'Add users from the Users tab.');
+      return friends.map(u=>{
+        let userProfit = 0;
+        state.applications.filter(a=>a.userId===u.id).forEach(a=>{
+          const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+          const c = computeApp(a, ipo, u);
+          if(c.status==='settled') userProfit += (c.friendShare||0);
+        });
+        return `<div class="list-item" onclick="openUser('${u.id}')">
+          <div class="row">
+            <div class="title">${esc(u.name)}</div>
+            <div class="right mono" style="font-weight:600; color:${userProfit>=0?'var(--profit)':'var(--loss)'}">${fmtMoney(userProfit)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    })()}
+
+    <div class="section-label">Upcoming Dates</div>
+    ${upcoming.length? upcoming.map(x=>`
+      <div class="list-item" onclick="openIpo('${x.i.id}')">
+        <div class="row">
+          <div>
+            <div class="title">${esc(x.i.name)}</div>
+            <div class="meta">${x.d.label} · ${fmtDate(x.d.date)}</div>
+          </div>
+          <div class="right">${statusBadge(x.i)}</div>
+        </div>
+      </div>`).join('') : emptyBlock('No IPOs yet', 'Add your first IPO from the IPOs tab.')}
+
+    <div class="section-label">GMP Watch</div>
+    ${watch.length? watch.map(i=>{
+      const gain = i.pricePerShare? ((i.gmp||0)/i.pricePerShare*100) : 0;
+      return `<div class="list-item" onclick="openIpo('${i.id}')">
+        <div class="row">
+          <div>
+            <div class="title">${esc(i.name)}</div>
+            <div class="meta">Price ${fmtMoney(i.pricePerShare)} · Lot ${i.lotSize||0}</div>
+          </div>
+          <div class="right">
+            <div class="mono" style="font-weight:600; color:${i.gmp>=0?'var(--profit)':'var(--loss)'}">${i.gmp>=0?'+':''}${fmtMoney(i.gmp)} GMP</div>
+            <div class="meta">${gain>=0?'+':''}${gain.toFixed(1)}% exp.</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('') : emptyBlock('Nothing to watch', 'IPOs awaiting listing will show GMP here.')}
+
+    <div class="section-label">Backup</div>
+    <div class="card card-tight" style="border-color:var(--gold-dim); margin-bottom:24px;">
+      <div class="helptext" style="margin:0 0 14px; color:var(--text-dim);">Your data lives in this app's storage only. Export a backup regularly, especially before clearing browser data.</div>
+      <div id="backupReminderText">${renderBackupReminderHtml()}</div>
+      <button class="btn btn-primary" style="margin-bottom:9px;" onclick="exportData()">⬇ Export Backup</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('importFileInput').click()">⬆ Import Backup</button>
+      ${renderAutoBackupsHtml()}
+    </div>
+  `;
+}
+function renderBackupReminderHtml(){
+  const r = backupReminderText();
+  return `<div style="font-size:12.5px; margin-bottom:10px; color:${r.urgent?'var(--loss)':'var(--text-faint)'};">${r.urgent?'⚠️ ':''}${r.text}</div>`;
+}
+function renderDashboardBackupReminderOnly(){
+  const el = document.getElementById('backupReminderText');
+  if(el) el.innerHTML = renderBackupReminderHtml();
+}
+function renderAutoBackupsHtml(){
+  const list = getAutoBackups();
+  if(!list.length) return '';
+  const rows = list.slice().reverse().map((b, i)=>{
+    const realIndex = list.length-1-i;
+    const when = new Date(b.ts).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+    const reasonLabel = b.reason==='before-import' ? 'auto, before an import' : b.reason==='before-restore' ? 'auto, before a restore' : 'auto, daily';
+    return `<div class="row" style="padding:8px 0; border-top:1px solid var(--border,rgba(255,255,255,0.06));">
+      <div>
+        <div style="font-size:12.5px;">${when}</div>
+        <div class="meta" style="font-size:11px;">${reasonLabel}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="width:auto;" onclick="restoreAutoBackup(${realIndex})">Restore</button>
+    </div>`;
+  }).join('');
+  return `<div style="margin-top:14px;">
+    <div class="helptext" style="margin:0 0 4px; color:var(--text-faint);">Automatic restore points (kept locally, separate from manual exports):</div>
+    ${rows}
+  </div>`;
+}
+function nextKeyDate(ipo){
+  const t = todayISO();
+  const candidates = [];
+  (ipo.biddingDates||[]).forEach(d=>{ if(d>=t) candidates.push({date:d, label:'Bidding'}); });
+  if(ipo.allotmentDate && ipo.allotmentDate>=t) candidates.push({date:ipo.allotmentDate, label:'Allotment'});
+  if(ipo.listingDate && ipo.listingDate>=t) candidates.push({date:ipo.listingDate, label:'Listing'});
+  candidates.sort((a,b)=>a.date.localeCompare(b.date));
+  return candidates[0];
+}
+function statusBadge(ipo){
+  if(ipo.archived) return `<span class="badge pending"><span class="dot"></span>Archived</span>`;
+  const s = ipoStatus(ipo);
+  let extra = '';
+  if(s==='open'){
+    const dates = (ipo.biddingDates||[]).slice().sort();
+    const last = dates[dates.length-1];
+    if(last){
+      const days = Math.round((new Date(last+'T00:00:00') - new Date(todayISO()+'T00:00:00'))/86400000);
+      if(days===0) extra = ' · Closes today';
+      else if(days>0) extra = ` · ${days}d left`;
+    }
+  }
+  return `<span class="badge ${s}"><span class="dot"></span>${STATUS_LABEL[s]}${extra}</span>`;
+}
+function emptyBlock(title, msg){
+  return `<div class="empty"><div class="icon">◇</div><div class="msg"><strong style="color:var(--text-dim)">${title}</strong><br>${msg}</div></div>`;
+}
+function esc(s){ return (s||'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ============================= IPOS LIST ============================= */
+const IPO_FILTERS = [
+  {key:'active', label:'Active'},
+  {key:'all', label:'All'},
+  {key:'open', label:'Open'},
+  {key:'pending', label:'Pending'},
+  {key:'listed', label:'Listed'},
+  {key:'archived', label:'Archived'}
+];
+function renderIposList(){
+  if(!state.ipos.length) return emptyBlock('No IPOs added', 'Tap the + button to add your first IPO — set price, lot size, and key dates.');
+
+  let list = state.ipos.slice();
+  if(ipoStatusFilter==='active') list = list.filter(i=>!i.archived && ipoStatus(i)!=='listed');
+  else if(ipoStatusFilter==='archived') list = list.filter(i=>i.archived);
+  else if(ipoStatusFilter!=='all') list = list.filter(i=>!i.archived && ipoStatus(i)===ipoStatusFilter);
+
+  if(ipoSearchQuery.trim()){
+    const q = ipoSearchQuery.trim().toLowerCase();
+    list = list.filter(i=>i.name.toLowerCase().includes(q));
+  }
+  list.sort((a,b)=> (b.biddingDates?.[0]||'').localeCompare(a.biddingDates?.[0]||''));
+
+  const chips = `<div class="chip-list" style="margin:0 0 12px;">
+    ${IPO_FILTERS.map(f=>`<span class="chip" style="cursor:pointer; ${ipoStatusFilter===f.key?'border-color:var(--gold-dim); color:var(--gold);':''}" onclick="ipoStatusFilter='${f.key}'; render();">${f.label}</span>`).join('')}
+  </div>`;
+  const search = `<input type="text" placeholder="Search IPOs…" value="${esc(ipoSearchQuery)}" style="margin-bottom:12px;" oninput="ipoSearchQuery=this.value; renderIpoListOnly();">`;
+
+  const body = list.length ? list.map(i=>{
+    const apps = state.applications.filter(a=>a.ipoId===i.id);
+    return `<div class="list-item" onclick="openIpo('${i.id}')">
+      <div class="row">
+        <div>
+          <div class="title">${esc(i.name)}</div>
+          <div class="meta">${fmtMoney(i.pricePerShare)}/share · Lot ${i.lotSize||0} · ${apps.length} applicant${apps.length!==1?'s':''}</div>
+        </div>
+        <div class="right">${statusBadge(i)}</div>
+      </div>
+    </div>`;
+  }).join('') : emptyBlock('No matches', 'Try a different search or filter.');
+
+  return `${search}${chips}<div id="ipoListBody">${body}</div>`;
+}
+function renderIpoListOnly(){
+  // lightweight re-render that preserves focus in the search input
+  const list0 = document.getElementById('ipoListBody');
+  if(!list0) return render();
+  let list = state.ipos.slice();
+  if(ipoStatusFilter==='active') list = list.filter(i=>!i.archived && ipoStatus(i)!=='listed');
+  else if(ipoStatusFilter==='archived') list = list.filter(i=>i.archived);
+  else if(ipoStatusFilter!=='all') list = list.filter(i=>!i.archived && ipoStatus(i)===ipoStatusFilter);
+  if(ipoSearchQuery.trim()){
+    const q = ipoSearchQuery.trim().toLowerCase();
+    list = list.filter(i=>i.name.toLowerCase().includes(q));
+  }
+  list.sort((a,b)=> (b.biddingDates?.[0]||'').localeCompare(a.biddingDates?.[0]||''));
+  list0.innerHTML = list.length ? list.map(i=>{
+    const apps = state.applications.filter(a=>a.ipoId===i.id);
+    return `<div class="list-item" onclick="openIpo('${i.id}')">
+      <div class="row">
+        <div>
+          <div class="title">${esc(i.name)}</div>
+          <div class="meta">${fmtMoney(i.pricePerShare)}/share · Lot ${i.lotSize||0} · ${apps.length} applicant${apps.length!==1?'s':''}</div>
+        </div>
+        <div class="right">${statusBadge(i)}</div>
+      </div>
+    </div>`;
+  }).join('') : emptyBlock('No matches', 'Try a different search or filter.');
+}
+
+/* ============================= IPO DETAIL ============================= */
+function openIpo(id){ activeTab='ipos'; ipoDetailId=id; ipoDetailSubTab='apps'; render(); window.scrollTo(0,0); }
+function renderIpoDetail(){
+  const ipo = state.ipos.find(i=>i.id===ipoDetailId);
+  if(!ipo){ ipoDetailId=null; return renderIposList(); }
+  const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+  const isListingDay = ipo.listingDate && todayISO() >= ipo.listingDate;
+  const isAllotmentDay = ipo.allotmentDate && todayISO() >= ipo.allotmentDate;
+
+  let totalProfit=0, totalCommission=0;
+  apps.forEach(a=>{ const u=state.users.find(x=>x.id===a.userId); if(!u) return; const c=computeApp(a,ipo,u); if(c.status==='settled'){ totalProfit += u.isMe? (c.profit||0) : (c.myProfitShare||0); totalCommission += c.commission||0; } });
+
+  return `
+    <button class="btn-ghost btn btn-sm" style="width:auto; margin-bottom:14px;" onclick="ipoDetailId=null; render();">← All IPOs</button>
+    <div class="card">
+      <div class="row" style="align-items:flex-start;">
+        <div>
+          <div class="page-title" style="font-size:19px; margin-bottom:6px;">${esc(ipo.name)}</div>
+          ${statusBadge(ipo)}
+        </div>
+        <button class="btn-ghost btn btn-sm" onclick="openIpoModal('${ipo.id}')">Edit</button>
+      </div>
+      <div class="divider"></div>
+      <div class="stat-grid" style="margin-bottom:0;">
+        <div class="stat"><div class="label">Price / Share</div><div class="value">${fmtMoney(ipo.pricePerShare)}</div></div>
+        <div class="stat"><div class="label">Lot Size</div><div class="value">${ipo.lotSize||0}</div></div>
+        <div class="stat"><div class="label">Cost / Lot</div><div class="value">${fmtMoney((ipo.lotSize||0)*(ipo.pricePerShare||0))}</div></div>
+        <div class="stat"><div class="label">Current GMP</div><div class="value ${(ipo.gmp||0)>=0?'profit':'loss'}">${ipo.gmp!=null?((ipo.gmp>=0?'+':'')+fmtMoney(ipo.gmp)):'—'}</div></div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <label style="margin:0; flex-shrink:0; white-space:nowrap;">Update GMP (₹/share)</label>
+        <input type="number" class="mono" id="gmpQuickInput" value="${ipo.gmp!=null?ipo.gmp:''}" placeholder="0" style="margin:0; flex:1; padding:8px 11px; font-size:13.5px;">
+        <button class="btn btn-secondary btn-sm" style="white-space:nowrap;" onclick="saveQuickGmp('${ipo.id}')">Save GMP</button>
+      </div>
+      <div class="divider"></div>
+      <div class="app-row" style="margin:0; background:transparent; border:none; padding:0;">
+        <div class="grid" style="margin-top:0;">
+          <div><div class="k">Bidding Dates</div><div class="v" style="font-size:12px;">${(ipo.biddingDates||[]).length? ipo.biddingDates.slice().sort().map(fmtDateShort).join(', ') : '—'}</div></div>
+          <div><div class="k">Allotment Date</div><div class="v">${fmtDate(ipo.allotmentDate)}</div></div>
+          <div><div class="k">Listing Date</div><div class="v">${fmtDate(ipo.listingDate)}</div></div>
+          <div><div class="k">Listing Price</div><div class="v ${ipo.listingPrice? (ipo.listingPrice>=ipo.pricePerShare?'':''):''}">${ipo.listingPrice!=null? fmtMoney(ipo.listingPrice): (isListingDay? 'Not set yet' : '—')}</div></div>
+        </div>
+      </div>
+      ${ipo.notes? `<div class="divider"></div><div><div class="k" style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">Notes</div><div style="font-size:13px; color:var(--text-dim);">${esc(ipo.notes)}</div></div>` : ''}
+      ${isListingDay ? `<div class="divider"></div><button class="btn btn-secondary btn-sm" style="width:100%;" onclick="promptListingPrice('${ipo.id}')">${ipo.listingPrice!=null?'Update':'Add'} Listing Price</button>` : ''}
+      <div class="divider"></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="exportIpoDetailsImage('${ipo.id}')">📷 Download as Image</button>
+    </div>
+
+    <div class="tab-strip">
+      <button class="${ipoDetailSubTab==='apps'?'active':''}" onclick="ipoDetailSubTab='apps'; render();">Applications</button>
+      <button class="${ipoDetailSubTab==='summary'?'active':''}" onclick="ipoDetailSubTab='summary'; render();">Summary</button>
+    </div>
+
+    ${ipoDetailSubTab==='apps' ? renderIpoApps(ipo, apps, isAllotmentDay, isListingDay) : renderIpoSummary(ipo, apps, totalProfit, totalCommission)}
+
+    <button class="btn btn-primary" style="margin-top:6px;" onclick="openAppModal(null, '${ipo.id}')">+ Add Applicant</button>
+    <button class="btn btn-ghost" style="margin-top:9px;" onclick="toggleArchiveIpo('${ipo.id}')">${ipo.archived? 'Unarchive IPO' : 'Archive IPO (fully settled)'}</button>
+  `;
+}
+function toggleArchiveIpo(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo) return;
+  ipo.archived = !ipo.archived;
+  saveState(); render(); showToast(ipo.archived? 'IPO archived' : 'IPO unarchived');
+}
+
+function renderIpoApps(ipo, apps, isAllotmentDay, isListingDay){
+  if(!apps.length) return emptyBlock('No applicants yet', 'Add yourself or a friend as an applicant for this IPO.');
+  return apps.map(a=>{
+    const user = state.users.find(u=>u.id===a.userId);
+    if(!user) return '';
+    const c = computeApp(a, ipo, user);
+    const cost = totalCost(a, ipo);
+    let statusChip = '';
+    if(a.allotted===false) statusChip = `<span class="badge pending"><span class="dot"></span>Not Allotted</span>`;
+    else if(a.allotted===true && c.status==='holding') statusChip = `<span class="badge allotted"><span class="dot"></span>Allotted · Holding</span>`;
+    else if(c.status==='settled') statusChip = `<span class="badge listed"><span class="dot"></span>Sold</span>`;
+    else statusChip = `<span class="badge upcoming"><span class="dot"></span>Awaiting Result</span>`;
+
+    const srcLabel = {commission:'Commission Model', assisted:'Assisted Mode', shared:'Shared Investment'}[c.profitMode] || '';
+    return `<div class="app-row">
+      <div class="row">
+        <div class="row" style="gap:9px;">
+          <div class="avatar">${initials(user.name)}</div>
+          <div>
+            <div class="name">${esc(user.name)}${user.isMe?' (You)':''}</div>
+            <div class="meta">${a.lots} lot${a.lots!==1?'s':''} · ${fmtMoney(cost)}${!user.isMe? ' · '+srcLabel : ''}</div>
+          </div>
+        </div>
+        ${statusChip}
+      </div>
+      <div class="grid">
+        <div><div class="k">Applied Amount</div><div class="v">${fmtMoney(cost)}</div></div>
+        <div><div class="k">Aryan's Investment</div><div class="v">${fmtMoney(a.fundedByMe||0)}</div></div>
+        <div><div class="k">User's Investment</div><div class="v">${fmtMoney(clamp0(cost-(a.fundedByMe||0)))}</div></div>
+        ${!user.isMe && (a.amountGiven!=null && a.amountGiven>(a.fundedByMe||0)+0.005) ? `<div><div class="k">Amount Given (Total)</div><div class="v gold">${fmtMoney(a.amountGiven)}</div></div>` : ''}
+        ${!user.isMe && (c.profitMode==='commission'||c.profitMode==='assisted') && a.allotted ? `<div><div class="k">Commission</div><div class="v">${a.commissionPercent!=null?a.commissionPercent:user.defaultCommission}%</div></div>` : ''}
+        ${!user.isMe && c.profitMode==='shared' && a.bonusToUser>0 ? `<div><div class="k">Bonus to User</div><div class="v">${fmtMoney(a.bonusToUser)}</div></div>` : ''}
+        ${c.status==='settled' ? `<div><div class="k">Selling Price</div><div class="v">${fmtMoney(a.sellPrice)}</div></div>` : ''}
+        ${c.status==='settled' ? `<div><div class="k">Sale Amount</div><div class="v">${fmtMoney(c.proceeds)}</div></div>` : ''}
+        ${c.status==='settled' ? `<div><div class="k">Profit / Loss</div><div class="v ${c.profit>=0?'profit':'loss'}">${fmtMoney(c.profit)}</div></div>` : ''}
+        ${!user.isMe && c.owedToMe>0.005 ? `<div><div class="k">Owed to Me${c.status==='pending'||c.status==='holding'?' (so far, blocked)':''}</div><div class="v gold">${fmtMoney(c.owedToMe)}</div></div>` : ''}
+      </div>
+      <div class="actions">
+        ${a.allotted==null ? `
+          <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="setAllotment('${a.id}', true)">Mark Allotted</button>
+          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="setAllotment('${a.id}', false)">Not Allotted</button>
+        ` : ''}
+        ${a.allotted===true && c.status==='holding' && isListingDay ? `<button class="btn btn-primary btn-sm" style="flex:1;" onclick="promptSellPrice('${a.id}')">Enter Sell Price</button>` : ''}
+        ${a.allotted===true && c.status==='holding' && !isListingDay && ipo.listingDate ? `<span class="meta" style="align-self:center;">Sell available on listing day</span>` : ''}
+        ${a.allotted===true && c.status==='holding' && !ipo.listingDate ? `<span class="meta" style="align-self:center;">Set listing date to enable selling</span>` : ''}
+        ${a.allotted!=null ? `<button class="btn btn-ghost btn-sm" onclick="undoAllotment('${a.id}')" title="Undo a wrong Mark Allotted / Not Allotted tap">↺ Change Result</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="openAppModal('${a.id}', '${ipo.id}')">Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteApp('${a.id}')">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderIpoSummary(ipo, apps, totalProfit, totalCommission){
+  const allotted = apps.filter(a=>a.allotted===true).length;
+  const notAllotted = apps.filter(a=>a.allotted===false).length;
+  const pending = apps.filter(a=>a.allotted==null).length;
+  // Only count capital still genuinely deployed (awaiting result) for THIS IPO — same rule as the
+  // dashboard's myDeployedCapital(): pending/holding only. Previously this summed fundedByMe for every
+  // non-refunded application regardless of status, so a settled application's capital stayed counted
+  // here forever even after it was fully collected back via a real transfer — the same double-counting
+  // bug the dashboard's "Capital Deployed" tile had before the v5.4.9 fix, just not caught here at the time.
+  const totalDeployed = apps.reduce((s,a)=>{
+    const u = state.users.find(x=>x.id===a.userId); if(!u) return s;
+    const c = computeApp(a, ipo, u);
+    return (c.status==='pending' || c.status==='holding') ? s + (c.aryanInvested||0) : s;
+  }, 0);
+  return `
+    <div class="stat-grid">
+      <div class="stat"><div class="label">Allotted</div><div class="value">${allotted}</div></div>
+      <div class="stat"><div class="label">Not Allotted</div><div class="value">${notAllotted}</div></div>
+      <div class="stat"><div class="label">Awaiting Result</div><div class="value">${pending}</div></div>
+      <div class="stat"><div class="label">Capital I Put In</div><div class="value gold">${fmtMoney(totalDeployed)}</div></div>
+      <div class="stat"><div class="label">Total Profit (Mine)</div><div class="value ${totalProfit>=0?'profit':'loss'}">${fmtMoney(totalProfit)}</div></div>
+      <div class="stat"><div class="label">Commission Paid</div><div class="value">${fmtMoney(totalCommission)}</div></div>
+    </div>
+  `;
+}
+function initials(name){ return (name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+function setAllotment(appId, allotted){
+  const a = state.applications.find(x=>x.id===appId); if(!a) return;
+  a.allotted = allotted;
+  if(allotted && a.lotsAllotted==null) a.lotsAllotted = a.lots;
+  if(!allotted){ a.lotsAllotted=null; a.sellPrice=null; }
+  saveState(); render();
+  showToast(allotted? 'Marked as allotted' : 'Marked as not allotted');
+}
+// Lets a mis-tap on "Mark Allotted" / "Not Allotted" be undone — resets the result back to "awaiting
+// result" so the Mark Allotted / Not Allotted buttons reappear and it can be set correctly. Warns
+// specifically if a sell price was already entered, since that gets cleared too.
+function undoAllotment(appId){
+  const a = state.applications.find(x=>x.id===appId); if(!a) return;
+  const hadSell = a.sellPrice!=null;
+  const extraWarn = hadSell ? ' This also clears the sell price that was already entered. If you already did a "Transfer to Aryan" for this user since it settled, that transfer stays logged as-is — double check their Account A balance afterward.' : '';
+  confirmAction(
+    `Reset the allotment result for this applicant back to "awaiting result"?${extraWarn} You'll be able to mark Allotted / Not Allotted again.`,
+    ()=>{
+      a.allotted = null;
+      a.lotsAllotted = null;
+      a.sellPrice = null;
+      saveState(); render(); showToast('Allotment result reset');
+    },
+    'Reset'
+  );
+}
+function promptSellPrice(appId){
+  const a = state.applications.find(x=>x.id===appId); const ipo = state.ipos.find(i=>i.id===a.ipoId);
+  openSellModal(appId, ipo);
+}
+function promptListingPrice(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId);
+  openListingPriceModal(ipo);
+}
+function deleteApp(appId){
+  confirmAction('Remove this applicant from the IPO? This cannot be undone.', ()=>{
+    state.applications = state.applications.filter(a=>a.id!==appId);
+    saveState(); render(); showToast('Applicant removed');
+  });
+}
+
+/* ============================= USERS LIST ============================= */
+function buildUserListHtml(){
+  let users = state.users.slice().sort((a,b)=> (b.isMe?1:0)-(a.isMe?1:0));
+  if(userSearchQuery.trim()){
+    const q = userSearchQuery.trim().toLowerCase();
+    users = users.filter(u=>u.name.toLowerCase().includes(q));
+  }
+  return users.length? users.map(u=>{
+    const apps = state.applications.filter(a=>a.userId===u.id);
+    let balHtml = '';
+    if(!u.isMe){
+      const bal = userBalance(u.id);
+      balHtml = `<div class="mono" style="font-weight:600; color:${bal.net>0?'var(--gold)':bal.net<0?'var(--loss)':'var(--text-faint)'}">${bal.net===0?'Settled':(bal.net>0? fmtMoney(bal.net)+' owed':'You owe '+fmtMoney(-bal.net))}</div>`;
+    } else {
+      const t = myTotals();
+      balHtml = `<div class="mono" style="font-weight:600; color:${t.profitMine>=0?'var(--profit)':'var(--loss)'}">${fmtMoney(t.profitMine)} profit</div>`;
+    }
+    return `<div class="list-item" onclick="openUser('${u.id}')">
+      <div class="row">
+        <div class="row" style="gap:11px;">
+          <div class="avatar">${initials(u.name)}</div>
+          <div>
+            <div class="title">${esc(u.name)}${u.isMe?' (You)':''}</div>
+            <div class="meta">${apps.length} application${apps.length!==1?'s':''}${!u.isMe? ' · '+(u.defaultCommission!=null?u.defaultCommission:25)+'% default commission':''}</div>
+          </div>
+        </div>
+        <div class="right">${balHtml}</div>
+      </div>
+    </div>`;
+  }).join('') : emptyBlock('No matches', 'Try a different search.');
+}
+function renderUsersList(){
+  const search = state.users.length>4 ? `<input type="text" placeholder="Search users…" value="${esc(userSearchQuery)}" style="margin-bottom:12px;" oninput="userSearchQuery=this.value; renderUserListOnly();">` : '';
+  const nonMe = state.users.filter(u=>!u.isMe);
+  const allUsersBtn = nonMe.length ? `<button class="btn btn-secondary btn-sm" style="width:100%; margin-bottom:14px;" onclick="exportAllUsersPDF()">⬇ Download All Users (PAN & TPIN)</button>` : '';
+  return `${allUsersBtn}${search}<div id="userListBody">${buildUserListHtml()}</div>`;
+}
+function renderUserListOnly(){
+  const body = document.getElementById('userListBody');
+  if(!body) return render();
+  body.innerHTML = buildUserListHtml();
+}
+
+/* ============================= USER DETAIL ============================= */
+function openUser(id){ activeTab='users'; userDetailId=id; render(); window.scrollTo(0,0); }
+function renderUserDetail(){
+  const u = state.users.find(x=>x.id===userDetailId);
+  if(!u){ userDetailId=null; return renderUsersList(); }
+  const apps = state.applications.filter(a=>a.userId===u.id);
+  const bal = !u.isMe ? userBalance(u.id) : null;
+  const txns = state.transactions.filter(t=>t.fromUserId===u.id || t.toUserId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const wds = (state.withdrawals||[]).filter(w=>w.userId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const deps = (state.deposits||[]).filter(d=>d.userId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const activity = [
+    ...txns.map(t=>({kind:'transfer', date:t.date, data:t})),
+    ...wds.map(w=>({kind:'withdrawal', date:w.date, data:w})),
+    ...deps.map(d=>({kind:'deposit', date:d.date, data:d}))
+  ].sort((a,b)=> b.date.localeCompare(a.date) || (a.kind).localeCompare(b.kind));
+
+  return `
+    <div class="row" style="align-items:center; margin-bottom:14px;">
+      <button class="btn-ghost btn btn-sm" style="width:auto;" onclick="userDetailId=null; render();">← All Users</button>
+      <button class="btn btn-secondary btn-sm" style="width:auto; margin-left:auto;" onclick="exportUserCardPDF('${u.id}')">⬇ Download User Report</button>
+    </div>
+    <div class="card">
+      <div class="row" style="align-items:flex-start;">
+        <div class="row" style="gap:12px;">
+          <div class="avatar" style="width:46px; height:46px; font-size:16px;">${initials(u.name)}</div>
+          <div>
+            <div class="page-title" style="font-size:18px; margin-bottom:2px;">${esc(u.name)}${u.isMe?' (You)':''}</div>
+            ${!u.isMe? `<div class="meta">Default commission: ${u.defaultCommission!=null?u.defaultCommission:25}%</div>`:'<div class="meta">Account owner</div>'}
+          </div>
+        </div>
+        <button class="btn-ghost btn btn-sm" onclick="openUserModal('${u.id}')">Edit</button>
+      </div>
+      ${(u.pan||u.tpin) ? `
+        <div class="divider"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          ${u.pan ? `<div>
+            <div class="k" style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">PAN</div>
+            <div class="mono" style="font-size:13px; letter-spacing:1px;">${esc(u.pan.slice(0,5))}●●●●${esc(u.pan.slice(-1))}</div>
+          </div>` : '<div></div>'}
+          ${u.tpin ? `<div>
+            <div class="k" style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;">TPIN</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="mono" id="tpinDisplay_${u.id}" style="font-size:13px; letter-spacing:1px;">${esc(u.tpin)}</span>
+            </div>
+          </div>` : ''}
+        </div>
+      ` : ''}
+    </div>
+
+    ${!u.isMe ? `
+      <div class="stat-grid">
+        <div class="stat"><div class="label">Account A (Aryan's money)</div><div class="value ${bal.accountA>=0?'gold':'loss'}">${fmtMoney(bal.accountA)}</div></div>
+        <div class="stat"><div class="label">Account B (their own money)</div><div class="value ${bal.accountB>=0?'gold':'loss'}">${fmtMoney(bal.accountB)}</div></div>
+        <div class="stat"><div class="label">Opening Balance</div><div class="value">${fmtMoney(bal.opening)}</div></div>
+        <div class="stat"><div class="label">Owed via IPOs</div><div class="value gold">${fmtMoney(bal.owed)}</div></div>
+        <div class="stat"><div class="label">Transfers Net</div><div class="value ${bal.transfers>=0?'profit':'loss'}">${bal.transfers>=0?'+':''}${fmtMoney(bal.transfers)}</div></div>
+        <div class="stat"><div class="label">Withdrawn to Cash</div><div class="value">${fmtMoney(bal.withdrawn)}</div></div>
+        <div class="stat"><div class="label">Net Balance</div><div class="value ${bal.net>=0?'gold':'loss'}">${bal.net>=0?fmtMoney(bal.net):'-'+fmtMoney(-bal.net)}</div></div>
+      </div>
+      <div class="helptext" style="margin:-6px 2px 14px;">Account A holds Aryan's money (transfers he's sent, plus his profit/principal not yet transferred back). Account B holds ${esc(u.name)}'s own money (cash they've added, plus their own profit share). Applying to an IPO deducts from A and/or B depending on the profit-sharing mode. Net Balance = A + B.</div>
+    ` : `
+      <div class="stat-grid">
+        <div class="stat"><div class="label">Opening Balance</div><div class="value">${fmtMoney(u.openingBalance||0)}</div></div>
+        <div class="stat"><div class="label">Deposited</div><div class="value">${fmtMoney(depositsFor(u.id))}</div></div>
+        <div class="stat"><div class="label">Withdrawn to Cash</div><div class="value">${fmtMoney(withdrawalsFor(u.id))}</div></div>
+        <div class="stat"><div class="label">My Account</div><div class="value ${myAccountBalance()>=0?'gold':'loss'}">${fmtMoney(myAccountBalance())}</div></div>
+      </div>
+    `}
+
+    <div class="section-label">Applications</div>
+    ${apps.length? apps.map(a=>{
+      const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return '';
+      const c = computeApp(a, ipo, u);
+      return `<div class="list-item" onclick="openIpo('${ipo.id}')">
+        <div class="row">
+          <div>
+            <div class="title">${esc(ipo.name)}</div>
+            <div class="meta">${a.lots} lot(s) · ${fmtMoney(totalCost(a,ipo))}${c.status==='settled'? ' · P/L '+fmtMoney(c.profit):''}</div>
+          </div>
+          <div class="right">${statusBadge(ipo)}</div>
+        </div>
+      </div>`;
+    }).join('') : emptyBlock('No applications', 'Applications for this user will appear here.')}
+
+
+    <div class="field-row" style="margin-top:14px; margin-bottom:10px;">
+      <button class="btn btn-secondary" onclick="openTxnModal('${u.id}')">+ Log Transfer</button>
+      <button class="btn btn-secondary" onclick="openWithdrawModal('${u.id}')">💵 Withdraw to Cash</button>
+    </div>
+    <div style="margin-bottom:10px;"><button class="btn btn-primary" style="width:100%;" onclick="openDepositModal('${u.id}')">💰 Add Cash to Account${u.isMe?'':' B'}</button></div>
+    ${!u.isMe ? `
+      <div style="margin-bottom:10px;"><button class="btn btn-secondary" style="width:100%;" onclick="openMoveModal('${u.id}')">🔁 Move Between Account A ↔ B</button></div>
+      <div style="margin-bottom:10px;"><button class="btn btn-primary" style="width:100%;" ${bal.accountA<=0?'disabled style="opacity:0.4; width:100%;"':''} onclick="settleUp('${u.id}')">💸 Transfer to Aryan (${bal.accountA>0?fmtMoney(bal.accountA):'Settled'})</button></div>
+      <div style="margin-bottom:10px;"><button class="btn btn-secondary" style="width:100%;" onclick="openTransferExtraModal('${u.id}')">💸 Transfer to Aryan + Extra Amount</button></div>
+    ` : ''}
+    <div class="section-label">Money Activity</div>
+    <div class="card card-tight">
+      ${activity.length? activity.map(item=>{
+        if(item.kind==='transfer'){
+          const t = item.data;
+          const fromU = state.users.find(x=>x.id===t.fromUserId);
+          const toU = state.users.find(x=>x.id===t.toUserId);
+          const isIn = t.toUserId===u.id;
+          const isInternal = t.fromUserId===t.toUserId;
+          let label, acctTag = '';
+          if(isInternal){
+            label = `Moved Account ${esc(t.fromAccount||'A')} → Account ${esc(t.toAccount||'B')}`;
+          } else if(t.fromUserId===u.id){
+            label = `To ${toU?esc(toU.name):'?'}${toU&&toU.isMe?' (You)':''}`;
+            if(t.fromAccount) acctTag = ` · from Account ${esc(t.fromAccount)}`;
+          } else {
+            label = `From ${fromU?esc(fromU.name):'?'}${fromU&&fromU.isMe?' (You)':''}`;
+            if(t.toAccount) acctTag = ` · to Account ${esc(t.toAccount)}`;
+          }
+          return `
+            <div class="txn-item">
+              <div class="txn-dot ${isIn?'in':'out'}">${isIn?'↓':'↑'}</div>
+              <div style="flex:1; cursor:pointer;" onclick="openTxnModal(null,'${t.id}')">
+                <div style="font-size:13px; font-weight:500;">${label}</div>
+                <div class="meta">${fmtDate(t.date)}${acctTag}${t.note? ' · '+esc(t.note):''}</div>
+              </div>
+              <div class="mono" style="font-weight:600;">${fmtMoney(t.amount)}</div>
+              <button style="background:none; border:none; color:var(--text-faint); font-size:16px; cursor:pointer; padding:6px 8px; border-radius:6px; line-height:1; flex-shrink:0;" onclick="event.stopPropagation();deleteTxn('${t.id}')" title="Delete">🗑</button>
+            </div>`;
+        } else if(item.kind==='withdrawal'){
+          const w = item.data;
+          const acctTag = (!u.isMe && w.account) ? ` · Account ${esc(w.account)}` : '';
+          return `
+            <div class="txn-item">
+              <div class="txn-dot out" style="background:rgba(45,212,191,0.14); color:var(--gold);">💵</div>
+              <div style="flex:1; cursor:pointer;" onclick="openWithdrawModal('${u.id}','${w.id}')">
+                <div style="font-size:13px; font-weight:500;">Cash withdrawal</div>
+                <div class="meta">${fmtDate(w.date)}${acctTag}${w.note? ' · '+esc(w.note):''}</div>
+              </div>
+              <div class="mono" style="font-weight:600;">${fmtMoney(w.amount)}</div>
+              <button style="background:none; border:none; color:var(--text-faint); font-size:16px; cursor:pointer; padding:6px 8px; border-radius:6px; line-height:1; flex-shrink:0;" onclick="event.stopPropagation();deleteWithdraw('${w.id}')" title="Delete">🗑</button>
+            </div>`;
+        } else {
+          const d = item.data;
+          return `
+            <div class="txn-item">
+              <div class="txn-dot in" style="background:rgba(95,209,136,0.14); color:var(--profit);">💰</div>
+              <div style="flex:1; cursor:pointer;" onclick="openDepositModal('${u.id}','${d.id}')">
+                <div style="font-size:13px; font-weight:500;">Cash deposit${u.isMe?'':' (Account B)'}</div>
+                <div class="meta">${fmtDate(d.date)}${d.note? ' · '+esc(d.note):''}</div>
+              </div>
+              <div class="mono" style="font-weight:600;">${fmtMoney(d.amount)}</div>
+              <button style="background:none; border:none; color:var(--text-faint); font-size:16px; cursor:pointer; padding:6px 8px; border-radius:6px; line-height:1; flex-shrink:0;" onclick="event.stopPropagation();deleteDeposit('${d.id}')" title="Delete">🗑</button>
+            </div>`;
+        }
+      }).join('') : `<div class="meta" style="padding:6px 0;">No transfers, withdrawals, or deposits logged yet.</div>`}
+    </div>
+  `;
+}
+// "Transfer to Aryan" always pulls from the user's Account A only — that's the account that represents
+// Aryan's own money sitting with them (their own Account B money is never swept to Aryan automatically).
+function settleUp(userId){
+  const availA = accountABalance(userId);
+  const me = state.users.find(u=>u.isMe);
+  if(availA<=0){ showToast('Nothing in Account A to transfer'); return; }
+  openTxnModal(null, null, {fromUserId:userId, toUserId:me.id, amount:availA, note:'Transfer to Aryan (Account A)'});
+}
+// Transfer everything Account A holds for this user PLUS an extra discretionary amount Aryan chooses to
+// pull, in one go. Creates a single real transfer transaction — that's what actually moves the money
+// into Aryan's own account balance; nothing is credited to Aryan until this runs.
+function openTransferExtraModal(userId){
+  const u = state.users.find(x=>x.id===userId); if(!u) return;
+  const availA = accountABalance(userId);
+  openModal(`
+    <div class="modal-title">Transfer to Aryan + Extra</div>
+    <div class="helptext" style="margin:0 0 12px;">Account A balance held by ${esc(u.name)} (Aryan's profit + principal): <strong>${fmtMoney(clamp0(availA))}</strong>. Add any extra amount above that to pull in the same transfer.</div>
+    <label>Extra Amount (₹)</label>
+    <input type="number" class="mono" id="f_extraAmt" value="" placeholder="0">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmTransferExtra('${userId}')">Continue</button>
+    </div>
+  `);
+}
+function confirmTransferExtra(userId){
+  const u = state.users.find(x=>x.id===userId); const me = state.users.find(x=>x.isMe);
+  const availA = accountABalance(userId);
+  const extra = clamp0(parseFloat(document.getElementById('f_extraAmt').value)||0);
+  const total = clamp0(availA) + extra;
+  if(total<=0){ showToast('Nothing to transfer'); return; }
+  closeModal();
+  openTxnModal(null, null, {fromUserId:userId, toUserId:me.id, amount:total, note: extra>0? `Profit transfer + extra ₹${extra}` : 'Profit transfer'});
+}
+
+/* ============================= REPORTS ============================= */
+let reportIpoId = null, reportUserId = null;
+let reportRangeFrom = null, reportRangeTo = null, reportFYStart = null;
+function renderReports(){
+  if(!reportIpoId && state.ipos.length) reportIpoId = state.ipos[0].id;
+  if(!reportUserId && state.users.length) reportUserId = state.users.find(u=>!u.isMe)?.id || state.users[0].id;
+  if(reportFYStart==null) reportFYStart = currentFYStartYear();
+
+  const fyOptions = (()=>{
+    const years = new Set([currentFYStartYear()]);
+    state.ipos.forEach(ipo=>{ if(ipo.listingDate) years.add(fyStartYearOf(ipo.listingDate)); });
+    return Array.from(years).sort((a,b)=>b-a);
+  })();
+
+  const ipoOptions = state.ipos.map(i=>`<option value="${i.id}" ${i.id===reportIpoId?'selected':''}>${esc(i.name)}</option>`).join('');
+  const userOptions = state.users.map(u=>`<option value="${u.id}" ${u.id===reportUserId?'selected':''}>${esc(u.name)}${u.isMe?' (You)':''}</option>`).join('');
+
+  let ipoReportHtml = emptyBlock('No IPO selected','Add an IPO to see its report.');
+  if(reportIpoId){
+    const ipo = state.ipos.find(i=>i.id===reportIpoId);
+    if(ipo){
+      const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+      ipoReportHtml = apps.length ? `
+        <div class="card card-tight">
+          <table class="tbl">
+            <tr><th>Applicant</th><th>Lots</th><th>Status</th><th>P/L</th><th>Owed</th></tr>
+            ${apps.map(a=>{
+              const u=state.users.find(x=>x.id===a.userId); if(!u) return '';
+              const c=computeApp(a,ipo,u);
+              return `<tr>
+                <td>${esc(u.name)}${u.isMe?' •':''}</td>
+                <td>${a.lots}</td>
+                <td>${c.status==='refunded'?'Not allotted':c.status==='holding'?'Holding':c.status==='settled'?'Sold':'Pending'}</td>
+                <td class="mono ${c.profit>0?'profit':c.profit<0?'loss':''}">${c.profit!=null?fmtMoney(c.profit):'—'}</td>
+                <td class="mono">${u.isMe?'—':fmtMoney(c.owedToMe)}</td>
+              </tr>`;
+            }).join('')}
+          </table>
+        </div>` : emptyBlock('No applicants', 'This IPO has no applicants yet.');
+    }
+  }
+
+  let userReportHtml = emptyBlock('No user selected','Add a user to see their report.');
+  if(reportUserId){
+    const u = state.users.find(x=>x.id===reportUserId);
+    if(u){
+      const apps = state.applications.filter(a=>a.userId===u.id);
+      userReportHtml = apps.length ? `
+        <div class="card card-tight">
+          <table class="tbl">
+            <tr><th>IPO</th><th>Lots</th><th>Status</th><th>P/L</th>${u.isMe?'':'<th>Owed</th>'}</tr>
+            ${apps.map(a=>{
+              const ipo=state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return '';
+              const c=computeApp(a,ipo,u);
+              return `<tr>
+                <td>${esc(ipo.name)}</td>
+                <td>${a.lots}</td>
+                <td>${c.status==='refunded'?'Not allotted':c.status==='holding'?'Holding':c.status==='settled'?'Sold':'Pending'}</td>
+                <td class="mono ${c.profit>0?'profit':c.profit<0?'loss':''}">${c.profit!=null?fmtMoney(c.profit):'—'}</td>
+                ${u.isMe?'':`<td class="mono">${fmtMoney(c.owedToMe)}</td>`}
+              </tr>`;
+            }).join('')}
+          </table>
+        </div>` : emptyBlock('No applications', 'This user has no applications yet.');
+    }
+  }
+
+  const profitByUser = state.users.map(u=>{
+    let totalProfit = 0, myShare = 0, settledCount = 0;
+    state.applications.filter(a=>a.userId===u.id).forEach(a=>{
+      const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+      const c = computeApp(a, ipo, u);
+      if(c.status==='settled'){
+        settledCount++;
+        totalProfit += (c.profit||0);
+        myShare += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+      }
+    });
+    return {id:u.id, name:u.name, isMe:u.isMe, totalProfit, myShare, settledCount};
+  }).sort((a,b)=> (b.isMe?1:0)-(a.isMe?1:0) || b.totalProfit-a.totalProfit);
+
+  return `
+    <div class="section-label" style="margin-top:0;">All IPOs Summary</div>
+    <div class="helptext" style="margin:0 0 10px;">One PDF covering every IPO: applied, not applied, allotted, profit per allotment, and total profit.</div>
+    <button class="btn btn-primary" onclick="exportAllIposSummaryPDF()">Download All IPOs Summary (PDF)</button>
+
+    <div class="section-label">Profit by User</div>
+    <div class="helptext" style="margin:0 0 10px;">Total realized profit/loss per user across every settled application, plus your commission or share earned from each.</div>
+    <div class="card card-tight">
+      <table class="tbl">
+        <tr><th>User</th><th>Settled Apps</th><th>Total P/L</th><th>${state.users.some(u=>!u.isMe)?'My Share':''}</th></tr>
+        ${profitByUser.map(row=>`
+          <tr>
+            <td>${esc(row.name)}${row.isMe?' •':''}</td>
+            <td>${row.settledCount}</td>
+            <td class="mono ${row.totalProfit>0?'profit':row.totalProfit<0?'loss':''}">${row.settledCount?fmtMoney(row.totalProfit):'—'}</td>
+            <td class="mono">${row.isMe? '—' : (row.settledCount? fmtMoney(row.myShare) : '—')}</td>
+          </tr>`).join('')}
+      </table>
+    </div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:10px;" onclick="exportProfitByUserPDF()">Download Profit by User (PDF)</button>
+
+    <div class="section-label">Pending Repayments</div>
+    <div class="helptext" style="margin:0 0 10px;">Every user whose Account A balance (Aryan's money still with them) is above zero — a quick list for follow-up.</div>
+    <button class="btn btn-secondary btn-sm" onclick="exportPendingRepaymentsPDF()">Download Pending Repayments (PDF)</button>
+
+    <div class="section-label">Date-Range Profit Report</div>
+    <div class="helptext" style="margin:0 0 10px;">Total profit, commission, and capital deployed for IPOs whose listing date falls in a chosen range. Leave a date blank for an open-ended range.</div>
+    <div class="field-row">
+      <div><label>From</label><input type="date" id="f_reportFrom" value="${reportRangeFrom||''}" onchange="reportRangeFrom=this.value||null;"></div>
+      <div><label>To</label><input type="date" id="f_reportTo" value="${reportRangeTo||''}" onchange="reportRangeTo=this.value||null;"></div>
+    </div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:10px;" onclick="exportDateRangeProfitPDF(document.getElementById('f_reportFrom').value||null, document.getElementById('f_reportTo').value||null)">Download Date-Range Report (PDF)</button>
+
+    <div class="section-label">Financial Year Report</div>
+    <div class="helptext" style="margin:0 0 10px;">Same idea, pinned to an Indian financial year (Apr 1 – Mar 31) — profit total plus a per-user breakup, handy for tax filing.</div>
+    <select id="f_reportFY" onchange="reportFYStart=parseInt(this.value);">
+      ${fyOptions.map(y=>`<option value="${y}" ${y===reportFYStart?'selected':''}>FY ${y}-${String(y+1).slice(-2)}</option>`).join('')}
+    </select>
+    <button class="btn btn-secondary btn-sm" style="margin-top:10px;" onclick="exportFinancialYearPDF(reportFYStart)">Download FY Report (PDF)</button>
+
+    <div class="section-label">Report by IPO</div>
+    <select onchange="reportIpoId=this.value; render();">${ipoOptions || '<option>No IPOs yet</option>'}</select>
+    <div style="margin-top:12px;">${ipoReportHtml}</div>
+    ${reportIpoId && state.applications.some(a=>a.ipoId===reportIpoId) ? `
+      <div class="field-row" style="margin-top:10px;">
+        <button class="btn btn-secondary btn-sm" onclick="exportIpoReportCSV('${reportIpoId}')">Export CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="exportIpoReportPDF('${reportIpoId}')">Download PDF</button>
+      </div>` : ''}
+
+    <div class="section-label">IPO Details Report</div>
+    <div class="helptext" style="margin:0 0 10px;">IPO name, price, last date to apply, and expected profit as per GMP you entered.</div>
+    ${reportIpoId ? `<div class="field-row">
+      <button class="btn btn-secondary btn-sm" onclick="exportIpoDetailsPDF('${reportIpoId}')">Download IPO Details (PDF)</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportIpoDetailsImage('${reportIpoId}')">Download as Image</button>
+    </div>` : ''}
+
+    <div class="section-label">Report by User</div>
+    <select onchange="reportUserId=this.value; render();">${userOptions || '<option>No users yet</option>'}</select>
+    <div style="margin-top:12px;">${userReportHtml}</div>
+    ${reportUserId && state.applications.some(a=>a.userId===reportUserId) ? `
+      <div class="field-row" style="margin-top:10px;">
+        <button class="btn btn-secondary btn-sm" onclick="exportUserReportCSV('${reportUserId}')">Export CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="exportUserReportPDF('${reportUserId}')">Download PDF</button>
+      </div>` : ''}
+  `;
+}
+function csvCell(v){
+  const s = (v===null||v===undefined)? '' : String(v);
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function downloadCSV(rows, filename){
+  const csv = rows.map(r=>r.map(csvCell).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  showToast('CSV downloaded');
+}
+function exportIpoReportCSV(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo) return;
+  const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+  const rows = [['Applicant','Lots','Status','Sell Price','Profit/Loss','Owed to Me']];
+  apps.forEach(a=>{
+    const u = state.users.find(x=>x.id===a.userId); if(!u) return;
+    const c = computeApp(a, ipo, u);
+    rows.push([u.name, a.lots, c.status, a.sellPrice||'', c.profit!=null?Math.round(c.profit):'', u.isMe?'':Math.round(c.owedToMe)]);
+  });
+  downloadCSV(rows, `${ipo.name.replace(/[^a-z0-9]+/gi,'-')}-report.csv`);
+}
+function exportUserReportCSV(userId){
+  const u = state.users.find(x=>x.id===userId); if(!u) return;
+  const apps = state.applications.filter(a=>a.userId===userId);
+  const rows = [['IPO','Lots','Status','Sell Price','Profit/Loss','Owed to Me']];
+  apps.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const c = computeApp(a, ipo, u);
+    rows.push([ipo.name, a.lots, c.status, a.sellPrice||'', c.profit!=null?Math.round(c.profit):'', u.isMe?'':Math.round(c.owedToMe)]);
+  });
+  downloadCSV(rows, `${u.name.replace(/[^a-z0-9]+/gi,'-')}-statement.csv`);
+}
+
+/* ============================= PDF EXPORTS ============================= */
+const PDF_GOLD = [45,212,191];
+const PDF_DARK = [8,8,8];
+const PDF_TEXT = [40,40,42];
+const PDF_DIM = [120,120,126];
+const PDF_PROFIT = [30,140,80];
+const PDF_LOSS = [200,60,55];
+
+function pdfDoc(){
+  const { jsPDF } = window.jspdf;
+  return new jsPDF({ unit:'pt', format:'a4' });
+}
+
+function pdfHeader(doc, title, subtitle){
+  const pageWidth = doc.internal.pageSize.getWidth();
+  // Header background
+  doc.setFillColor(...PDF_DARK);
+  doc.rect(0, 0, pageWidth, 68, 'F');
+
+  // IPO logo mark — dark box with teal/green border + teal/green "IPO" text
+  doc.setFillColor(0, 0, 0);
+  doc.roundedRect(28, 10, 46, 28, 5, 5, 'F');
+  doc.setDrawColor(...PDF_GOLD);
+  doc.setLineWidth(0.8);
+  doc.roundedRect(28, 10, 46, 28, 5, 5, 'S');
+  doc.setTextColor(...PDF_GOLD);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('IPO', 51, 29, {align:'center'});
+  // Underline inside mark
+  // (jsPDF.GState isn't reliably available across builds, so instead of
+  // setGState opacity we just draw the line in a dimmer accent to get the
+  // same muted look — no opacity API dependency needed.)
+  doc.setDrawColor(30, 130, 115);
+  doc.setLineWidth(0.6);
+  doc.line(32, 33, 70, 33);
+  doc.setDrawColor(...PDF_GOLD);
+
+  // App name
+  doc.setTextColor(...PDF_GOLD);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text("Aryan's IPO Manager", 82, 22);
+
+  // Report title + subtitle
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.text(title, 82, 34);
+  doc.setTextColor(180, 180, 188);
+  doc.setFontSize(8);
+  doc.text(subtitle || `Generated ${fmtDate(todayISO())}`, 82, 45);
+
+  doc.setTextColor(...PDF_TEXT);
+  return 88;
+}
+
+function pdfFooter(doc){
+  const pageCount = doc.internal.getNumberOfPages();
+  for(let i=1;i<=pageCount;i++){
+    doc.setPage(i);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    doc.setFontSize(8);
+    doc.setTextColor(...PDF_DIM);
+    doc.text(`IPO Manager — Page ${i} of ${pageCount}`, 36, pageHeight-20);
+    doc.text(fmtDate(todayISO()), pageWidth-36, pageHeight-20, {align:'right'});
+  }
+}
+
+function statusLabelFor(c){
+  return c.status==='refunded' ? 'Not Allotted'
+    : c.status==='holding' ? 'Allotted (Holding)'
+    : c.status==='settled' ? 'Allotted (Sold)'
+    : 'Awaiting Result';
+}
+
+function downloadPDF(doc, filename){
+  try{
+    doc.save(filename);
+    showToast('PDF downloaded');
+  }catch(e){ showToast('PDF export failed'); }
+}
+
+/* --- Single IPO Report PDF: applied / not applied / allotted / profit per allotment / total profit --- */
+function exportIpoReportPDF(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo) return;
+  const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, `IPO Report — ${ipo.name}`, `Price ${fmtMoney(ipo.pricePerShare)} · Lot ${ipo.lotSize||0} · Last date to apply ${fmtDate(lastApplyDate(ipo))}`);
+
+  const applied = apps.length;
+  const notApplied = state.users.length - applied;
+  const allotted = apps.filter(a=>a.allotted===true).length;
+  const notAllotted = apps.filter(a=>a.allotted===false).length;
+  const pending = apps.filter(a=>a.allotted==null).length;
+  let totalProfit = 0;
+  apps.forEach(a=>{
+    const u = state.users.find(x=>x.id===a.userId); if(!u) return;
+    const c = computeApp(a, ipo, u);
+    if(c.status==='settled') totalProfit += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+  });
+
+  doc.setFontSize(10); doc.setTextColor(...PDF_TEXT); doc.setFont('helvetica','bold');
+  doc.text('Summary', 36, y); y += 6;
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [['Applied','Not Applied','Allotted','Not Allotted','Awaiting Result','Total Profit (Mine)']],
+    body: [[applied, Math.max(0,notApplied), allotted, notAllotted, pending, fmtMoney(totalProfit)]],
+    theme: 'grid',
+    headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+    bodyStyles:{ fontSize:9 },
+    didParseCell: (data)=>{
+      if(data.section==='body' && data.column.index===5){
+        data.cell.styles.textColor = totalProfit>=0 ? PDF_PROFIT : PDF_LOSS;
+        data.cell.styles.fontStyle = 'bold';
+      }
+    }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('Applications', 36, y); y += 6;
+
+  const body = apps.map(a=>{
+    const u = state.users.find(x=>x.id===a.userId);
+    if(!u) return null;
+    const c = computeApp(a, ipo, u);
+    const srcLabel = {commission:'Commission', assisted:'Assisted', shared:'Shared'}[c.profitMode] || '—';
+    const profitDisplay = c.profit!=null ? fmtMoney(u.isMe? c.profit : c.myProfitShare) : '—';
+    return [u.name + (u.isMe?' (You)':''), a.lots, srcLabel, statusLabelFor(c),
+      c.status==='settled'? fmtMoney(a.sellPrice) : '—', profitDisplay,
+      u.isMe? '—' : (c.owedToMe>0.005 ? fmtMoney(c.owedToMe) : '—')];
+  }).filter(Boolean);
+
+  if(body.length){
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: [['Applicant','Lots','Funding','Status','Sell Price','Profit (Mine)','Owed to Me']],
+      body,
+      theme: 'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+      bodyStyles:{ fontSize:8.5 },
+      alternateRowStyles:{ fillColor:[236,250,247] }
+    });
+  } else {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    doc.text('No applicants for this IPO yet.', 36, y+14);
+  }
+
+  pdfFooter(doc);
+  downloadPDF(doc, `${ipo.name.replace(/[^a-z0-9]+/gi,'-')}-report.pdf`);
+}
+
+/* --- Single User Report PDF --- */
+function exportUserReportPDF(userId){
+  const u = state.users.find(x=>x.id===userId); if(!u) return;
+  const apps = state.applications.filter(a=>a.userId===userId);
+  const bal = !u.isMe ? userBalance(u.id) : null;
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, `User Report — ${u.name}${u.isMe?' (You)':''}`, u.isMe? 'Account owner' : `Default commission ${u.defaultCommission!=null?u.defaultCommission:25}%`);
+
+  let totalProfit = 0;
+  apps.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const c = computeApp(a, ipo, u);
+    if(c.status==='settled') totalProfit += u.isMe ? (c.profit||0) : (c.friendShare||0);
+  });
+
+  doc.setFontSize(10); doc.setTextColor(...PDF_TEXT); doc.setFont('helvetica','bold');
+  doc.text('Summary', 36, y); y += 6;
+  const summaryHead = u.isMe
+    ? ['Opening Balance','Applications','Total Profit']
+    : ['Account A (Aryan)','Account B (Theirs)','Applications','Their Profit','Net Balance'];
+  const summaryBody = u.isMe
+    ? [[fmtMoney(u.openingBalance||0), apps.length, fmtMoney(totalProfit)]]
+    : [[fmtMoney(bal.accountA), fmtMoney(bal.accountB), apps.length, fmtMoney(totalProfit), (bal.net>=0?fmtMoney(bal.net)+' owed to you':'You owe '+fmtMoney(-bal.net))]];
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [summaryHead], body: summaryBody,
+    theme:'grid', headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:9 }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('IPO Applications', 36, y); y += 6;
+
+  const body = apps.map(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return null;
+    const c = computeApp(a, ipo, u);
+    const srcLabel = {commission:'Commission', assisted:'Assisted', shared:'Shared'}[c.profitMode] || '—';
+    const profitDisplay = c.profit!=null ? fmtMoney(u.isMe? c.profit : c.friendShare) : '—';
+    return [ipo.name, a.lots, srcLabel, statusLabelFor(c), profitDisplay, u.isMe?'—':(c.owedToMe>0.005?fmtMoney(c.owedToMe):'—')];
+  }).filter(Boolean);
+
+  if(body.length){
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: [['IPO','Lots','Funding','Status','Profit','Owed to Me']],
+      body, theme:'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+      alternateRowStyles:{ fillColor:[236,250,247] }
+    });
+    y = doc.lastAutoTable.finalY + 24;
+  } else {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    doc.text('No applications yet.', 36, y+14);
+    y += 30;
+  }
+
+  if(!u.isMe){
+    const txns = state.transactions.filter(t=>t.fromUserId===u.id || t.toUserId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+    if(txns.length){
+      if(y > doc.internal.pageSize.getHeight()-120){ doc.addPage(); y = 40; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+      doc.text('Money Transfers', 36, y); y += 6;
+      const txnBody = txns.map(t=>{
+        const fromU = state.users.find(x=>x.id===t.fromUserId);
+        const toU = state.users.find(x=>x.id===t.toUserId);
+        return [fmtDate(t.date), fromU?fromU.name:'?', toU?toU.name:'?', fmtMoney(t.amount), t.note||''];
+      });
+      doc.autoTable({
+        startY: y+6, margin:{left:36,right:36},
+        head: [['Date','From','To','Amount','Note']],
+        body: txnBody, theme:'striped',
+        headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+        alternateRowStyles:{ fillColor:[236,250,247] }
+      });
+      y = doc.lastAutoTable.finalY + 24;
+    }
+  }
+  const wds = (state.withdrawals||[]).filter(w=>w.userId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(wds.length){
+    if(y > doc.internal.pageSize.getHeight()-120){ doc.addPage(); y = 40; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+    doc.text('Withdrawals to Cash', 36, y); y += 6;
+    const wdBody = wds.map(w=>[fmtDate(w.date), fmtMoney(w.amount), w.note||'']);
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: [['Date','Amount','Note']],
+      body: wdBody, theme:'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+      alternateRowStyles:{ fillColor:[236,250,247] }
+    });
+    y = doc.lastAutoTable.finalY + 24;
+  }
+  {
+    const deps = (state.deposits||[]).filter(d=>d.userId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+    if(deps.length){
+      if(y > doc.internal.pageSize.getHeight()-120){ doc.addPage(); y = 40; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+      doc.text(u.isMe? 'Cash Deposits' : 'Cash Deposits (Account B)', 36, y); y += 6;
+      const depBody = deps.map(d=>[fmtDate(d.date), fmtMoney(d.amount), d.note||'']);
+      doc.autoTable({
+        startY: y+6, margin:{left:36,right:36},
+        head: [['Date','Amount','Note']],
+        body: depBody, theme:'striped',
+        headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+        alternateRowStyles:{ fillColor:[236,250,247] }
+      });
+    }
+  }
+
+  pdfFooter(doc);
+  downloadPDF(doc, `${u.name.replace(/[^a-z0-9]+/gi,'-')}-statement.pdf`);
+}
+
+/* --- IPO Details PDF: name, price, last date to apply, GMP-based expected profit --- */
+function exportIpoDetailsPDF(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo) return;
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, `IPO Details — ${ipo.name}`, 'Projection based on GMP entered manually');
+
+  const expPerShare = expectedProfitPerShare(ipo);
+  const expPerLot = expectedProfitPerLot(ipo);
+  const expTotal = expectedProfitForIpo(ipo);
+
+  doc.setFontSize(10); doc.setTextColor(...PDF_TEXT); doc.setFont('helvetica','bold');
+  doc.text('IPO Overview', 36, y); y += 6;
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [['IPO Name','Price / Share','Lot Size','Cost / Lot','Last Date to Apply','Allotment Date','Listing Date']],
+    body: [[ipo.name, fmtMoney(ipo.pricePerShare), ipo.lotSize||0, fmtMoney((ipo.lotSize||0)*(ipo.pricePerShare||0)), fmtDate(lastApplyDate(ipo)), fmtDate(ipo.allotmentDate), fmtDate(ipo.listingDate)]],
+    theme:'grid', headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:7.5 }, bodyStyles:{ fontSize:8.5 }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+  doc.text('Expected Profit (as per GMP)', 36, y); y += 6;
+  if(expPerShare==null){
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    doc.text('No GMP entered for this IPO yet — add it from the IPO detail screen to see a projection.', 36, y+14);
+    y += 30;
+  } else {
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: [['GMP / Share','Expected Profit / Lot','Total Expected Profit (all applicants)']],
+      body: [[ (expPerShare>=0?'+':'')+fmtMoney(expPerShare), fmtMoney(expPerLot), fmtMoney(expTotal) ]],
+      theme:'grid', headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:9 },
+      didParseCell: (data)=>{
+        if(data.section==='body'){
+          data.cell.styles.textColor = expPerShare>=0 ? PDF_PROFIT : PDF_LOSS;
+          data.cell.styles.fontStyle = 'bold';
+        }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 24;
+  }
+
+  if(ipo.notes){
+    y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 24 : y;
+    if(y > doc.internal.pageSize.getHeight()-80){ doc.addPage(); y = 40; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+    doc.text('Notes', 36, y); y += 16;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    const lines = doc.splitTextToSize(ipo.notes, doc.internal.pageSize.getWidth()-72);
+    doc.text(lines, 36, y);
+  }
+
+  pdfFooter(doc);
+  downloadPDF(doc, `${ipo.name.replace(/[^a-z0-9]+/gi,'-')}-details.pdf`);
+}
+
+/* --- All IPOs Summary PDF: applied / not applied / allotted / profit per allotment / total profit, across every IPO --- */
+function exportAllIposSummaryPDF(){
+  if(!state.ipos.length){ showToast('No IPOs to report'); return; }
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, 'All IPOs Summary Report', `${state.ipos.length} IPO${state.ipos.length!==1?'s':''} tracked`);
+
+  let grandProfit = 0;
+  const rows = state.ipos.map(ipo=>{
+    const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+    const applied = apps.length;
+    const notApplied = Math.max(0, state.users.length - applied);
+    const allotted = apps.filter(a=>a.allotted===true).length;
+    const notAllotted = apps.filter(a=>a.allotted===false).length;
+    let ipoProfit = 0;
+    apps.forEach(a=>{
+      const u = state.users.find(x=>x.id===a.userId); if(!u) return;
+      const c = computeApp(a, ipo, u);
+      if(c.status==='settled') ipoProfit += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+    });
+    grandProfit += ipoProfit;
+    return [ipo.name, applied, notApplied, allotted, notAllotted, fmtMoney(ipoProfit)];
+  });
+
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [['IPO Name','Applied','Not Applied','Allotted','Not Allotted','Total Profit (Mine)']],
+    body: rows,
+    theme:'striped',
+    headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+    bodyStyles:{ fontSize:8.5 },
+    alternateRowStyles:{ fillColor:[236,250,247] },
+    foot: [['Grand Total','','','','', fmtMoney(grandProfit)]],
+    footStyles:{ fillColor:[209,244,236], textColor:PDF_DARK, fontStyle:'bold', fontSize:9 }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+
+  // Profit by User
+  const userRows = state.users.map(u=>{
+    let totalProfit = 0, myShare = 0, settledCount = 0;
+    state.applications.filter(a=>a.userId===u.id).forEach(a=>{
+      const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+      const c = computeApp(a, ipo, u);
+      if(c.status==='settled'){
+        settledCount++;
+        totalProfit += (c.profit||0);
+        myShare += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+      }
+    });
+    return {u, totalProfit, myShare, settledCount};
+  }).sort((a,b)=> (b.u.isMe?1:0)-(a.u.isMe?1:0) || b.totalProfit-a.totalProfit);
+
+  if(userRows.some(r=>r.settledCount>0)){
+    if(y > doc.internal.pageSize.getHeight()-120){ doc.addPage(); y = 40; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...PDF_TEXT);
+    doc.text('Profit by User', 36, y); y += 10;
+    doc.autoTable({
+      startY: y+4, margin:{left:36,right:36},
+      head: [['User','Settled Apps','Total P/L','My Share']],
+      body: userRows.map(r=>[r.u.name+(r.u.isMe?' (You)':''), r.settledCount, r.settledCount?fmtMoney(r.totalProfit):'—', r.u.isMe?'—':(r.settledCount?fmtMoney(r.myShare):'—')]),
+      theme:'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+      bodyStyles:{ fontSize:8.5 },
+      alternateRowStyles:{ fillColor:[236,250,247] }
+    });
+  }
+
+  pdfFooter(doc);
+  downloadPDF(doc, `all-ipos-summary-${todayISO()}.pdf`);
+}
+
+/* --- Profit by User PDF (standalone) --- */
+function exportProfitByUserPDF(){
+  if(!state.users.length){ showToast('No users to report'); return; }
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, 'Profit by User Report', `Realized profit/loss per user across every settled application`);
+
+  let grandProfit = 0, grandMyShare = 0;
+  const rows = state.users.map(u=>{
+    let totalProfit = 0, myShare = 0, settledCount = 0;
+    state.applications.filter(a=>a.userId===u.id).forEach(a=>{
+      const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+      const c = computeApp(a, ipo, u);
+      if(c.status==='settled'){
+        settledCount++;
+        totalProfit += (c.profit||0);
+        myShare += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+      }
+    });
+    grandProfit += totalProfit; grandMyShare += myShare;
+    return {u, totalProfit, myShare, settledCount};
+  }).sort((a,b)=> (b.u.isMe?1:0)-(a.u.isMe?1:0) || b.totalProfit-a.totalProfit);
+
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [['User','Settled Apps','Total P/L','My Share']],
+    body: rows.map(r=>[r.u.name+(r.u.isMe?' (You)':''), r.settledCount, r.settledCount?fmtMoney(r.totalProfit):'—', r.u.isMe?'—':(r.settledCount?fmtMoney(r.myShare):'—')]),
+    theme:'striped',
+    headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+    bodyStyles:{ fontSize:8.5 },
+    alternateRowStyles:{ fillColor:[236,250,247] },
+    foot: [['Grand Total','', fmtMoney(grandProfit), fmtMoney(grandMyShare)]],
+    footStyles:{ fillColor:[209,244,236], textColor:PDF_DARK, fontStyle:'bold', fontSize:9 }
+  });
+
+  pdfFooter(doc);
+  downloadPDF(doc, `profit-by-user-${todayISO()}.pdf`);
+}
+
+/* --- Pending Repayments Report: every non-Aryan user whose Account A balance is still owed to Aryan --- */
+function exportPendingRepaymentsPDF(){
+  const friends = state.users.filter(u=>!u.isMe);
+  if(!friends.length){ showToast('No users to report'); return; }
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, 'Pending Repayments Report', `Money currently owed to Aryan (Account A), as of ${fmtDate(todayISO())}`);
+
+  const rows = friends.map(u=>({u, owed: clamp0(accountABalance(u.id))}))
+    .filter(r=>r.owed>0.005)
+    .sort((a,b)=>b.owed-a.owed);
+
+  const totalOwed = rows.reduce((s,r)=>s+r.owed,0);
+
+  doc.setFontSize(10); doc.setTextColor(...PDF_TEXT); doc.setFont('helvetica','bold');
+  doc.text('Summary', 36, y); y += 6;
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [['Users with Pending Repayment','Total Owed to Aryan']],
+    body: [[rows.length, fmtMoney(totalOwed)]],
+    theme: 'grid',
+    headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+    bodyStyles:{ fontSize:9 },
+    didParseCell: (data)=>{
+      if(data.section==='body' && data.column.index===1){
+        data.cell.styles.textColor = PDF_GOLD;
+        data.cell.styles.fontStyle = 'bold';
+      }
+    }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+  doc.text('Owed by User', 36, y); y += 6;
+
+  if(rows.length){
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: [['User','Owed to Aryan (Account A)']],
+      body: rows.map(r=>[r.u.name, fmtMoney(r.owed)]),
+      theme: 'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+      bodyStyles:{ fontSize:9 },
+      alternateRowStyles:{ fillColor:[236,250,247] },
+      foot: [['Total', fmtMoney(totalOwed)]],
+      footStyles:{ fillColor:[209,244,236], textColor:PDF_DARK, fontStyle:'bold', fontSize:9.5 }
+    });
+  } else {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    doc.text('Nobody currently owes any money — all accounts are settled up.', 36, y+14);
+  }
+
+  pdfFooter(doc);
+  downloadPDF(doc, `pending-repayments-${todayISO()}.pdf`);
+}
+
+/* --- Date-range Profit Report: settled applications whose IPO's listing date falls in the range.
+   NOTE: applications don't store their own settlement timestamp, so ipo.listingDate is used as the
+   best available proxy for "when this application's IPO settled" — this is the same date the Sell
+   Price modal defaults from and the date money typically becomes collectible. An IPO with no listing
+   date set is excluded from every date-range/FY report since there's no date to filter it by. --- */
+function appsSettledInRange(fromISO, toISO){
+  const out = [];
+  state.applications.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    if(!ipo.listingDate) return;
+    if(fromISO && ipo.listingDate < fromISO) return;
+    if(toISO && ipo.listingDate > toISO) return;
+    const u = state.users.find(x=>x.id===a.userId); if(!u) return;
+    const c = computeApp(a, ipo, u);
+    if(c.status==='settled') out.push({a, ipo, u, c});
+  });
+  return out.sort((x,y)=> (x.ipo.listingDate||'').localeCompare(y.ipo.listingDate||''));
+}
+function exportDateRangeProfitPDF(fromISO, toISO){
+  const entries = appsSettledInRange(fromISO, toISO);
+  const doc = pdfDoc();
+  const rangeLabel = (fromISO||toISO) ? `${fromISO?fmtDate(fromISO):'Start'} — ${toISO?fmtDate(toISO):'Today'}` : 'All time';
+  let y = pdfHeader(doc, 'Date-Range Profit Report', `Settled by IPO listing date · ${rangeLabel}`);
+
+  let grandProfit = 0, grandMyShare = 0, grandCommission = 0, grandCapital = 0;
+  const ipoIdsSeen = new Set();
+  entries.forEach(({a, ipo, u, c})=>{
+    grandProfit += (c.profit||0);
+    grandMyShare += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+    grandCommission += (c.commission||0);
+    grandCapital += (c.aryanInvested||0);
+    ipoIdsSeen.add(ipo.id);
+  });
+
+  doc.setFontSize(10); doc.setTextColor(...PDF_TEXT); doc.setFont('helvetica','bold');
+  doc.text('Summary', 36, y); y += 6;
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [['IPOs Settled','Applications','Capital Deployed','Total Profit (Mine)','Commission Paid']],
+    body: [[ipoIdsSeen.size, entries.length, fmtMoney(grandCapital), fmtMoney(grandMyShare), fmtMoney(grandCommission)]],
+    theme: 'grid',
+    headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+    bodyStyles:{ fontSize:9 },
+    didParseCell: (data)=>{
+      if(data.section==='body' && data.column.index===3){
+        data.cell.styles.textColor = grandMyShare>=0 ? PDF_PROFIT : PDF_LOSS;
+        data.cell.styles.fontStyle = 'bold';
+      }
+    }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+  doc.text('Settled Applications', 36, y); y += 6;
+
+  if(entries.length){
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: [['Listing Date','IPO','Applicant','Lots','Sell Price','Profit (Total)','Profit (Mine)']],
+      body: entries.map(({a, ipo, u, c})=>[
+        fmtDate(ipo.listingDate), ipo.name, u.name+(u.isMe?' (You)':''), a.lots,
+        fmtMoney(a.sellPrice), fmtMoney(c.profit), fmtMoney(u.isMe? c.profit : c.myProfitShare)
+      ]),
+      theme: 'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+      bodyStyles:{ fontSize:8 },
+      alternateRowStyles:{ fillColor:[236,250,247] },
+      foot: [['','','','','Grand Total', fmtMoney(grandProfit), fmtMoney(grandMyShare)]],
+      footStyles:{ fillColor:[209,244,236], textColor:PDF_DARK, fontStyle:'bold', fontSize:8.5 }
+    });
+  } else {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    doc.text('No settled applications in this date range.', 36, y+14);
+  }
+
+  pdfFooter(doc);
+  const suffix = (fromISO||toISO) ? `${fromISO||'start'}_to_${toISO||'today'}` : 'all-time';
+  downloadPDF(doc, `profit-report-${suffix}.pdf`);
+}
+
+/* --- Financial Year Report: same as date-range, pinned to India's Apr 1 – Mar 31 FY --- */
+function fyRangeFor(fyStartYear){
+  return { from: `${fyStartYear}-04-01`, to: `${fyStartYear+1}-03-31` };
+}
+function currentFYStartYear(){
+  const d = new Date();
+  const y = d.getFullYear();
+  return (d.getMonth()+1) >= 4 ? y : y-1; // Jan-Mar belongs to the FY that started the previous April
+}
+function fyStartYearOf(iso){
+  if(!iso) return currentFYStartYear();
+  const [y,m] = iso.split('-').map(Number);
+  return m>=4 ? y : y-1;
+}
+function exportFinancialYearPDF(fyStartYear){
+  const { from, to } = fyRangeFor(fyStartYear);
+  const entries = appsSettledInRange(from, to);
+  const doc = pdfDoc();
+  const fyLabel = `FY ${fyStartYear}-${String(fyStartYear+1).slice(-2)}`;
+  let y = pdfHeader(doc, `Financial Year Report — ${fyLabel}`, `${fmtDate(from)} — ${fmtDate(to)} · settled by IPO listing date`);
+
+  let grandProfit = 0, grandMyShare = 0, grandCommission = 0, grandCapital = 0;
+  entries.forEach(({c, u})=>{
+    grandProfit += (c.profit||0);
+    grandMyShare += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+    grandCommission += (c.commission||0);
+    grandCapital += (c.aryanInvested||0);
+  });
+
+  doc.setFontSize(10); doc.setTextColor(...PDF_TEXT); doc.setFont('helvetica','bold');
+  doc.text('Summary', 36, y); y += 6;
+  doc.autoTable({
+    startY: y+6, margin:{left:36,right:36},
+    head: [['Applications Settled','Capital Deployed','Total Profit (Mine)','Commission Paid']],
+    body: [[entries.length, fmtMoney(grandCapital), fmtMoney(grandMyShare), fmtMoney(grandCommission)]],
+    theme: 'grid',
+    headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+    bodyStyles:{ fontSize:9 },
+    didParseCell: (data)=>{
+      if(data.section==='body' && data.column.index===2){
+        data.cell.styles.textColor = grandMyShare>=0 ? PDF_PROFIT : PDF_LOSS;
+        data.cell.styles.fontStyle = 'bold';
+      }
+    }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+
+  // Profit by user within this FY, for a tax-filing-style per-person breakup
+  const userMap = new Map();
+  entries.forEach(({c, u})=>{
+    if(!userMap.has(u.id)) userMap.set(u.id, {u, totalProfit:0, myShare:0, count:0});
+    const row = userMap.get(u.id);
+    row.totalProfit += (c.profit||0);
+    row.myShare += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+    row.count++;
+  });
+  const userRows = Array.from(userMap.values()).sort((a,b)=>(b.u.isMe?1:0)-(a.u.isMe?1:0) || b.totalProfit-a.totalProfit);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+  doc.text('Profit by User (this FY)', 36, y); y += 6;
+
+  if(userRows.length){
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: [['User','Settled Apps','Total P/L','My Share']],
+      body: userRows.map(r=>[r.u.name+(r.u.isMe?' (You)':''), r.count, fmtMoney(r.totalProfit), r.u.isMe?'—':fmtMoney(r.myShare)]),
+      theme:'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 },
+      bodyStyles:{ fontSize:8.5 },
+      alternateRowStyles:{ fillColor:[236,250,247] }
+    });
+  } else {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PDF_DIM);
+    doc.text('No settled applications in this financial year.', 36, y+14);
+  }
+
+  pdfFooter(doc);
+  downloadPDF(doc, `financial-year-report-${fyLabel.replace(/\s+/g,'-')}.pdf`);
+}
+
+/* ============================= IMAGE EXPORT ============================= */
+function exportIpoDetailsImage(ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo){ showToast('IPO not found'); return; }
+
+  const dpr = window.devicePixelRatio || 1;
+  const W = 720, PAD = 36;
+  const GOLD = '#2dd4bf', PROFIT = '#5fd188', LOSS = '#f0685f', DIM = '#8f8f95', FAINT = '#5c5c62';
+  const BG = '#000000', BG2 = '#121212', BG3 = '#1a1a1a', BORDER = '#2a2a2a', TEXT = '#ededec';
+
+  const expPerShare = expectedProfitPerShare(ipo);
+  const expPerLot = expectedProfitPerLot(ipo);
+  const apps = state.applications.filter(a=>a.ipoId===ipo.id);
+
+  // Compute rows
+  const rows = [
+    ['Price / Share', fmtMoney(ipo.pricePerShare)],
+    ['Lot Size', String(ipo.lotSize||0)],
+    ['Cost / Lot', fmtMoney((ipo.lotSize||0)*(ipo.pricePerShare||0))],
+    ['GMP / Share', ipo.gmp!=null ? (ipo.gmp>=0?'+':'')+fmtMoney(ipo.gmp) : '—'],
+    ['Expected Profit / Lot', expPerLot!=null ? fmtMoney(expPerLot) : '—'],
+    ['Last Date to Apply', fmtDate(lastApplyDate(ipo))],
+    ['Allotment Date', fmtDate(ipo.allotmentDate)],
+    ['Listing Date', fmtDate(ipo.listingDate)],
+  ];
+  if(ipo.listingPrice!=null) rows.push(['Listing Price', fmtMoney(ipo.listingPrice)]);
+
+  const appRows = []; // Per-applicant expected profit removed from IPO details
+
+  // Measure notes wrap BEFORE sizing the canvas — using a fixed height guess
+  // here (instead of the real line count) let long notes overflow past the
+  // bottom of the canvas, silently clipping the notes text and footer.
+  let noteLines = [];
+  if(ipo.notes){
+    const measureCanvas = document.createElement('canvas');
+    const measureCtx = measureCanvas.getContext('2d');
+    measureCtx.font = '12px Inter, sans-serif';
+    noteLines = wrapText(measureCtx, ipo.notes, W-PAD*2);
+  }
+
+  const ROW_H = 38, HEADER_H = 70, TITLE_BLOCK = 88, SECTION_GAP = 20;
+  let estimatedH = HEADER_H + TITLE_BLOCK + rows.length * ROW_H + SECTION_GAP;
+  if(noteLines.length) estimatedH += 20 + 18 + noteLines.length * 18 + 8; // divider gap + label + actual lines + bottom gap
+  estimatedH += 50; // footer + bottom padding
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W * dpr; canvas.height = estimatedH * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // BG
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, estimatedH);
+
+  // Header bar
+  ctx.fillStyle = BG2;
+  roundRect(ctx, 0, 0, W, HEADER_H, 0);
+
+  // IPO logo mark
+  const MX = PAD, MY = 12, MW = 52, MH = 32, MR = 7;
+  const logoGrad = ctx.createLinearGradient(MX, MY, MX+MW, MY+MH);
+  logoGrad.addColorStop(0, '#22d3ee');
+  logoGrad.addColorStop(1, '#34d399');
+  ctx.fillStyle = '#000000';
+  roundRect(ctx, MX, MY, MW, MH, MR);
+  ctx.strokeStyle = logoGrad;
+  ctx.lineWidth = 1.2;
+  ctx.globalAlpha = 0.6;
+  roundRectPath(ctx, MX, MY, MW, MH, MR);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = logoGrad;
+  ctx.font = 'bold 16px "Space Grotesk", Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('IPO', MX + MW/2, MY + 21);
+  ctx.strokeStyle = logoGrad;
+  ctx.lineWidth = 0.8;
+  ctx.globalAlpha = 0.4;
+  ctx.beginPath(); ctx.moveTo(MX+6, MY+MH-6); ctx.lineTo(MX+MW-6, MY+MH-6); ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'left';
+
+  // App name + subtitle
+  const LX = MX + MW + 10;
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 14px "Space Grotesk", Inter, sans-serif';
+  ctx.fillText("Aryan's IPO Manager", LX, 28);
+  ctx.fillStyle = TEXT;
+  ctx.font = '11px Inter, sans-serif';
+  ctx.fillText('IPO Details', LX, 44);
+  ctx.fillStyle = DIM;
+  ctx.font = '10px Inter, sans-serif';
+  ctx.fillText(`Generated ${fmtDate(todayISO())}`, LX, 58);
+
+  let y = HEADER_H + 24;
+
+  // IPO name + status
+  ctx.fillStyle = TEXT;
+  ctx.font = 'bold 22px Inter, sans-serif';
+  ctx.fillText(ipo.name, PAD, y); y += 28;
+  const st = ipoStatus(ipo);
+  const stLabel = STATUS_LABEL[st] || st;
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 11px Inter, sans-serif';
+  ctx.fillText('● ' + stLabel.toUpperCase(), PAD, y); y += 28;
+
+  // Divider
+  divLine(ctx, PAD, y, W-PAD, BORDER); y += 18;
+
+  // Detail rows
+  rows.forEach(([k, v], i)=>{
+    const rowY = y + i * ROW_H;
+    if(i%2===1){ ctx.fillStyle = BG3; roundRect(ctx, PAD-8, rowY-18, W-PAD*2+16, ROW_H, 6); }
+    ctx.fillStyle = FAINT;
+    ctx.font = '10px Inter, sans-serif';
+    ctx.fillText(k.toUpperCase(), PAD, rowY);
+    // color for GMP / expected profit
+    let valColor = TEXT;
+    if(k.includes('GMP') || k.includes('Expected')){ valColor = expPerShare!=null ? (expPerShare>=0? PROFIT : LOSS) : DIM; }
+    ctx.fillStyle = valColor;
+    ctx.font = 'bold 14px "Courier New", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(v, W-PAD, rowY+14);
+    ctx.textAlign = 'left';
+  });
+  y += rows.length * ROW_H + SECTION_GAP;
+
+  // Applicants section
+  if(appRows.length){
+    divLine(ctx, PAD, y, W-PAD, BORDER); y += 20;
+    ctx.fillStyle = FAINT;
+    ctx.font = 'bold 10px Inter, sans-serif';
+    ctx.fillText('EXPECTED PROFIT BY APPLICANT', PAD, y); y += 20;
+    appRows.forEach(([name, lots, exp], i)=>{
+      const rowY = y + i * ROW_H;
+      if(i%2===0){ ctx.fillStyle = BG3; roundRect(ctx, PAD-8, rowY-16, W-PAD*2+16, ROW_H, 6); }
+      ctx.fillStyle = TEXT;
+      ctx.font = '13px Inter, sans-serif';
+      ctx.fillText(name, PAD, rowY);
+      ctx.fillStyle = DIM;
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText(lots, PAD, rowY+14);
+      ctx.fillStyle = expPerShare!=null ? (expPerShare>=0? PROFIT : LOSS) : DIM;
+      ctx.font = 'bold 14px "Courier New", monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(exp, W-PAD, rowY+8);
+      ctx.textAlign = 'left';
+    });
+    y += appRows.length * ROW_H + SECTION_GAP;
+  }
+
+  // Notes
+  if(ipo.notes){
+    divLine(ctx, PAD, y, W-PAD, BORDER); y += 20;
+    ctx.fillStyle = FAINT;
+    ctx.font = 'bold 10px Inter, sans-serif';
+    ctx.fillText('NOTES', PAD, y); y += 18;
+    ctx.fillStyle = DIM;
+    ctx.font = '12px Inter, sans-serif';
+    // noteLines was already computed pre-sizing (above canvas.width/height), reused here so the
+    // wrap result drawn matches exactly what the canvas height was calculated for
+    noteLines.forEach(l=>{ ctx.fillText(l, PAD, y); y += 18; });
+    y += 8;
+  }
+
+  // Footer
+  y += 12;
+  divLine(ctx, PAD, y, W-PAD, BORDER); y += 16;
+  ctx.fillStyle = FAINT;
+  ctx.font = '10px Inter, sans-serif';
+  ctx.fillText("IPO Manager", PAD, y);
+  ctx.textAlign = 'right';
+  ctx.fillText(fmtDate(todayISO()), W-PAD, y);
+  ctx.textAlign = 'left';
+
+  // Trim canvas to actual height
+  const finalH = y + 24;
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width = W * dpr; outCanvas.height = finalH * dpr;
+  const octx = outCanvas.getContext('2d');
+  octx.drawImage(canvas, 0, 0);
+
+  outCanvas.toBlob(blob=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${ipo.name.replace(/[^a-z0-9]+/gi,'-')}-details.png`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    showToast('Image downloaded');
+  }, 'image/png');
+}
+
+function roundRectPath(ctx, x, y, w, h, r){
+  // Manual quadratic-curve path (does NOT use native ctx.roundRect, which
+  // isn't available on older Android WebView and crashes there).
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+function roundRect(ctx, x, y, w, h, r){
+  roundRectPath(ctx, x, y, w, h, r);
+  ctx.fill();
+}
+function divLine(ctx, x1, y, x2, color){
+  ctx.strokeStyle = color; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+}
+function wrapText(ctx, text, maxW){
+  const words = text.split(' '); const lines = []; let line = '';
+  words.forEach(w=>{ const test = line ? line+' '+w : w; if(ctx.measureText(test).width > maxW){ lines.push(line); line = w; } else line = test; });
+  if(line) lines.push(line);
+  return lines;
+}
+
+
+/* --- User Card PDF: full detail for one user --- */
+function exportUserCardPDF(userId){
+  const u = state.users.find(x=>x.id===userId); if(!u) return;
+  const apps = state.applications.filter(a=>a.userId===u.id);
+  const bal = !u.isMe ? userBalance(u.id) : null;
+
+  // Stats
+  const totalApplied = apps.length;
+  const totalAllotted = apps.filter(a=>a.allotted===true).length;
+  let myProfitShare = 0;
+  apps.forEach(a=>{
+    const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return;
+    const c = computeApp(a, ipo, u);
+    if(c.status==='settled') myProfitShare += u.isMe ? (c.profit||0) : (c.myProfitShare||0);
+  });
+
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, `User Report — ${u.name}`, u.isMe ? 'Account owner' : `Default commission: ${u.defaultCommission!=null?u.defaultCommission:25}%`);
+
+  // Identity block
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+  doc.text('Identity', 36, y); y += 6;
+  const idBody = [
+    ['Name', u.name + (u.isMe?' (You)':'')],
+    ['PAN', u.pan ? u.pan : '—'],
+    ['TPIN', u.tpin ? u.tpin : '—'],
+  ];
+  doc.autoTable({
+    startY: y+6, margin:{left:36, right:36},
+    body: idBody, theme:'plain',
+    bodyStyles:{ fontSize:9 },
+    columnStyles:{ 0:{ fontStyle:'bold', cellWidth:80, textColor:PDF_DIM }, 1:{ textColor:PDF_TEXT } }
+  });
+  y = doc.lastAutoTable.finalY + 18;
+
+  // Balance block (skip for isMe)
+  if(!u.isMe){
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+    doc.text('Balance', 36, y); y += 6;
+    const netLabel = bal.net >= 0 ? fmtMoney(bal.net)+' (owes you)' : 'You owe '+fmtMoney(-bal.net);
+    doc.autoTable({
+      startY: y+6, margin:{left:36, right:36},
+      head: [['Account A (Aryan)','Account B (Theirs)','Net Balance']],
+      body: [[fmtMoney(bal.accountA), fmtMoney(bal.accountB), netLabel]],
+      theme:'grid', headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:9 }
+    });
+    y = doc.lastAutoTable.finalY + 18;
+  } else {
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+    doc.text('Account Balance', 36, y); y += 6;
+    doc.autoTable({
+      startY: y+6, margin:{left:36, right:36},
+      head: [['Opening Balance','Current Balance']],
+      body: [[fmtMoney(u.openingBalance||0), fmtMoney(myAccountBalance())]],
+      theme:'grid', headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:9 }
+    });
+    y = doc.lastAutoTable.finalY + 18;
+  }
+
+  // Activity summary
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+  doc.text('IPO Activity', 36, y); y += 6;
+  doc.autoTable({
+    startY: y+6, margin:{left:36, right:36},
+    head: [['Applied (Total IPOs)', 'Allotted', 'Not Allotted / Pending', u.isMe?'Total Profit':"Aryan's Profit Share"]],
+    body: [[totalApplied, totalAllotted, totalApplied-totalAllotted, fmtMoney(myProfitShare)]],
+    theme:'grid', headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:9 }
+  });
+  y = doc.lastAutoTable.finalY + 18;
+
+  // Per-IPO breakdown
+  if(apps.length){
+    if(y > doc.internal.pageSize.getHeight()-120){ doc.addPage(); y = 40; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+    doc.text('Application Details', 36, y); y += 6;
+    const body = apps.map(a=>{
+      const ipo = state.ipos.find(i=>i.id===a.ipoId); if(!ipo) return null;
+      const c = computeApp(a, ipo, u);
+      const profitDisplay = c.status==='settled' ? fmtMoney(u.isMe ? c.profit : c.myProfitShare) : '—';
+      return [ipo.name, a.lots, statusLabelFor(c), u.isMe?'—':(c.owedToMe>0.005?fmtMoney(c.owedToMe):'—'), profitDisplay];
+    }).filter(Boolean);
+    doc.autoTable({
+      startY: y+6, margin:{left:36, right:36},
+      head: [['IPO Name','Lots','Status','Owed to Aryan','Profit/Commission']],
+      body, theme:'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+      alternateRowStyles:{ fillColor:[236,250,247] }
+    });
+  }
+
+  // Money transfers (non-me only)
+  if(!u.isMe){
+    const txns = state.transactions.filter(t=>t.fromUserId===u.id || t.toUserId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+    if(txns.length){
+      if(y > doc.internal.pageSize.getHeight()-120){ doc.addPage(); y = 40; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+      doc.text('Money Transfers', 36, y); y += 6;
+      doc.autoTable({
+        startY: y+6, margin:{left:36,right:36},
+        head: [['Date','From','To','Amount','Account','Note']],
+        body: txns.map(t=>{
+          const fU=state.users.find(x=>x.id===t.fromUserId); const tU=state.users.find(x=>x.id===t.toUserId);
+          const acctLabel = t.fromUserId===t.toUserId ? `${t.fromAccount||'A'}→${t.toAccount||'B'}` : (t.fromUserId===u.id ? (t.fromAccount||'—') : (t.toAccount||'—'));
+          return [fmtDate(t.date), fU?fU.name:'?', tU?tU.name:'?', fmtMoney(t.amount), acctLabel, t.note||''];
+        }),
+        theme:'striped', headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+        alternateRowStyles:{ fillColor:[236,250,247] }
+      });
+      y = doc.lastAutoTable.finalY + 18;
+    }
+  }
+  // Withdrawals
+  const wds2 = (state.withdrawals||[]).filter(w=>w.userId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(wds2.length){
+    if(y > doc.internal.pageSize.getHeight()-120){ doc.addPage(); y = 40; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+    doc.text('Withdrawals to Cash', 36, y); y += 6;
+    doc.autoTable({
+      startY: y+6, margin:{left:36,right:36},
+      head: u.isMe ? [['Date','Amount','Note']] : [['Date','Amount','Account','Note']],
+      body: wds2.map(w=> u.isMe ? [fmtDate(w.date), fmtMoney(w.amount), w.note||''] : [fmtDate(w.date), fmtMoney(w.amount), w.account||'A', w.note||'']),
+      theme:'striped',
+      headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+      alternateRowStyles:{ fillColor:[236,250,247] }
+    });
+    y = doc.lastAutoTable.finalY + 18;
+  }
+  {
+    const deps2 = (state.deposits||[]).filter(d=>d.userId===u.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+    if(deps2.length){
+      if(y > doc.internal.pageSize.getHeight()-120){ doc.addPage(); y = 40; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+      doc.text(u.isMe? 'Cash Deposits' : 'Cash Deposits (Account B)', 36, y); y += 6;
+      doc.autoTable({
+        startY: y+6, margin:{left:36,right:36},
+        head: [['Date','Amount','Note']],
+        body: deps2.map(d=>[fmtDate(d.date), fmtMoney(d.amount), d.note||'']), theme:'striped',
+        headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:8 }, bodyStyles:{ fontSize:8.5 },
+        alternateRowStyles:{ fillColor:[236,250,247] }
+      });
+    }
+  }
+
+  pdfFooter(doc);
+  downloadPDF(doc, `${u.name.replace(/[^a-z0-9]+/gi,'-')}-user-report.pdf`);
+}
+
+/* --- All Users PDF: Name, PAN, TPIN for every non-me user --- */
+function exportAllUsersPDF(){
+  const users = state.users.filter(u=>!u.isMe);
+  if(!users.length){ showToast('No users to export'); return; }
+  const doc = pdfDoc();
+  let y = pdfHeader(doc, 'All Users — PAN & TPIN Directory', `${users.length} user${users.length!==1?'s':''} · Generated ${fmtDate(todayISO())}`);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...PDF_TEXT);
+  doc.text('User Directory', 36, y); y += 6;
+
+  const body = users.map(u=>[
+    u.name,
+    u.pan || '—',
+    u.tpin || '—'
+  ]);
+
+  doc.autoTable({
+    startY: y+6, margin:{left:36, right:36},
+    head: [['Name','PAN','TPIN']],
+    body,
+    theme:'striped',
+    headStyles:{ fillColor:PDF_DARK, textColor:255, fontSize:9 },
+    bodyStyles:{ fontSize:10, cellPadding:7 },
+    alternateRowStyles:{ fillColor:[236,250,247] },
+    columnStyles:{
+      0:{ fontStyle:'bold' },
+      1:{ font:'courier', fontSize:9.5 },
+      2:{ font:'courier', fontSize:9.5 }
+    }
+  });
+
+  pdfFooter(doc);
+  downloadPDF(doc, `all-users-pan-tpin-${todayISO()}.pdf`);
+}
+
+/* ============================= MODALS ============================= */
+function openModal(innerHtml){
+  // If a modal is already open (user tapped something that opens a modal
+  // twice in quick succession), remove it first instead of stacking a
+  // second #modalBackdrop on top — stacked backdrops left stale DOM/state
+  // (like window._appModalMode) from the earlier modal still reachable.
+  closeModal();
+  window._appModalMode = null; // reset here; openAppModal sets its own value right after this call
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-backdrop';
+  wrap.id = 'modalBackdrop';
+  wrap.innerHTML = `<div class="modal" onclick="event.stopPropagation()"><div class="modal-handle"></div>${innerHtml}</div>`;
+  wrap.addEventListener('click', closeModal);
+  document.body.appendChild(wrap);
+}
+function closeModal(){
+  const m = document.getElementById('modalBackdrop');
+  if(m) m.remove();
+}
+// Custom confirmation modal — native confirm() is silently suppressed in
+// standalone PWA mode on Android/iOS (see Money Activity delete bug history),
+// so all destructive actions route through this instead.
+function confirmAction(message, onConfirm, okLabel){
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-backdrop';
+  wrap.id = 'confirmBackdrop';
+  wrap.innerHTML = `<div class="modal" onclick="event.stopPropagation()" style="max-width:360px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Are you sure?</div>
+    <div style="margin:4px 0 18px; color:var(--text-dim,#999); line-height:1.4;">${esc(message)}</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="confirmCancelBtn">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn">${esc(okLabel||'Delete')}</button>
+    </div>
+  </div>`;
+  const close = ()=>wrap.remove();
+  wrap.addEventListener('click', close);
+  document.body.appendChild(wrap);
+  document.getElementById('confirmCancelBtn').addEventListener('click', (e)=>{ e.stopPropagation(); close(); });
+  document.getElementById('confirmOkBtn').addEventListener('click', (e)=>{ e.stopPropagation(); close(); onConfirm(); });
+}
+
+/* --- IPO modal --- */
+let tempBiddingDates = [];
+function openIpoModal(ipoId){
+  const ipo = ipoId ? state.ipos.find(i=>i.id===ipoId) : null;
+  tempBiddingDates = ipo ? (ipo.biddingDates||[]).slice() : [];
+  openModal(`
+    <div class="modal-title">${ipo?'Edit IPO':'Add IPO'}</div>
+    <label>IPO Name</label>
+    <input type="text" id="f_name" value="${ipo?esc(ipo.name):''}" placeholder="e.g. Acme Industries">
+    <div class="field-row">
+      <div><label>Price per Share</label><input type="number" class="mono" id="f_price" value="${ipo?ipo.pricePerShare:''}" placeholder="0"></div>
+      <div><label>Shares per Lot</label><input type="number" class="mono" id="f_lot" value="${ipo?ipo.lotSize:''}" placeholder="0"></div>
+    </div>
+    <label>Bidding Dates (select multiple)</label>
+    <div class="date-add-row">
+      <input type="date" id="f_biddate">
+      <button class="btn btn-secondary btn-sm" onclick="addTempDate()">Add</button>
+    </div>
+    <div class="chip-list" id="dateChips">${renderDateChips()}</div>
+    <div class="field-row">
+      <div><label>Allotment Date</label><input type="date" id="f_allot" value="${ipo?ipo.allotmentDate||'':''}"></div>
+      <div><label>Listing Date</label><input type="date" id="f_listing" value="${ipo?ipo.listingDate||'':''}"></div>
+    </div>
+    <label>Current GMP (₹ per share)</label>
+    <input type="number" class="mono" id="f_gmp" value="${ipo && ipo.gmp!=null?ipo.gmp:''}" placeholder="0">
+    <label>Notes (optional)</label>
+    <input type="text" id="f_notes" value="${ipo&&ipo.notes?esc(ipo.notes):''}" placeholder="e.g. broker used, application ref.">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveIpo('${ipoId||''}')">Save IPO</button>
+    </div>
+    ${ipo? `<button class="btn btn-danger" style="margin-top:10px;" onclick="deleteIpo('${ipoId}')">Delete IPO</button>` : ''}
+  `);
+}
+function renderDateChips(){
+  return tempBiddingDates.slice().sort().map(d=>`<div class="chip">${fmtDateShort(d)}<span class="x" onclick="removeTempDate('${d}')">✕</span></div>`).join('');
+}
+function addTempDate(){
+  const v = document.getElementById('f_biddate').value;
+  if(!v) return;
+  if(!tempBiddingDates.includes(v)) tempBiddingDates.push(v);
+  document.getElementById('dateChips').innerHTML = renderDateChips();
+}
+function removeTempDate(d){
+  tempBiddingDates = tempBiddingDates.filter(x=>x!==d);
+  document.getElementById('dateChips').innerHTML = renderDateChips();
+}
+function saveIpo(ipoId){
+  const name = document.getElementById('f_name').value.trim();
+  const price = parseFloat(document.getElementById('f_price').value)||0;
+  const lot = parseInt(document.getElementById('f_lot').value)||0;
+  const allot = document.getElementById('f_allot').value || null;
+  const listing = document.getElementById('f_listing').value || null;
+  const gmpVal = document.getElementById('f_gmp').value;
+  const gmp = gmpVal===''? null : parseFloat(gmpVal);
+  const notes = document.getElementById('f_notes').value.trim();
+  if(!name){ showToast('Please enter an IPO name'); return; }
+  if(price<=0){ showToast('Price per share must be greater than 0'); return; }
+  if(lot<=0){ showToast('Shares per lot must be greater than 0'); return; }
+  if(gmp!=null && isNaN(gmp)){ showToast('Enter a valid GMP or leave it blank'); return; }
+  if(allot && listing && allot > listing){ showToast('Listing date should not be before the allotment date'); return; }
+  if(ipoId){
+    const ipo = state.ipos.find(i=>i.id===ipoId);
+    Object.assign(ipo, {name, pricePerShare:price, lotSize:lot, biddingDates:tempBiddingDates.slice(), allotmentDate:allot, listingDate:listing, gmp, notes});
+  } else {
+    state.ipos.push({id:uid(), name, pricePerShare:price, lotSize:lot, biddingDates:tempBiddingDates.slice(), allotmentDate:allot, listingDate:listing, gmp, notes, listingPrice:null, archived:false});
+  }
+  saveState(); closeModal(); render(); showToast('IPO saved');
+}
+function deleteIpo(ipoId){
+  confirmAction('Delete this IPO and all its applications? This cannot be undone.', ()=>{
+    state.ipos = state.ipos.filter(i=>i.id!==ipoId);
+    state.applications = state.applications.filter(a=>a.ipoId!==ipoId);
+    saveState(); closeModal(); ipoDetailId=null; render(); showToast('IPO deleted');
+  });
+}
+function openListingPriceModal(ipo){
+  openModal(`
+    <div class="modal-title">Listing Price — ${esc(ipo.name)}</div>
+    <label>Listing Price per Share</label>
+    <input type="number" class="mono" id="f_lp" value="${ipo.listingPrice!=null?ipo.listingPrice:''}" placeholder="0">
+    <div class="helptext">This sets the reference listing price. Each applicant's actual sell price can still be entered separately if they sold at a different price.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveListingPrice('${ipo.id}')">Save</button>
+    </div>
+  `);
+}
+function saveQuickGmp(ipoId){
+  const el = document.getElementById('gmpQuickInput');
+  if(!el) return;
+  const v = el.value.trim();
+  const ipo = state.ipos.find(i=>i.id===ipoId); if(!ipo) return;
+  ipo.gmp = v===''? null : parseFloat(v);
+  saveState(); render(); showToast('GMP updated');
+}
+function saveListingPrice(ipoId){
+  const v = parseFloat(document.getElementById('f_lp').value);
+  if(!isNaN(v) && v<0){ showToast('Listing price cannot be negative'); return; }
+  const ipo = state.ipos.find(i=>i.id===ipoId);
+  ipo.listingPrice = isNaN(v)? null : v;
+  saveState(); closeModal(); render(); showToast('Listing price saved');
+}
+
+/* --- Application modal --- */
+function openAppModal(appId, ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId);
+  const app = appId ? state.applications.find(a=>a.id===appId) : null;
+  const usedUserIds = state.applications.filter(a=>a.ipoId===ipoId).map(a=>a.userId);
+  const availableUsers = state.users.filter(u=> app? true : !usedUserIds.includes(u.id));
+  if(!app && !availableUsers.length){ showToast('All users already applied to this IPO'); return; }
+  const userOptions = availableUsers.map(u=>`<option value="${u.id}" ${app&&app.userId===u.id?'selected':''}>${esc(u.name)}${u.isMe?' (You)':''}</option>`).join('');
+
+  const initMode = app ? profitModeOf(app) : 'commission';
+  const initSelUser = app ? state.users.find(u=>u.id===app.userId) : availableUsers[0];
+  openModal(`
+    <div class="modal-title">${app?'Edit Applicant':'Add Applicant'}</div>
+    <label>User</label>
+    <select id="f_user" ${app?'disabled':''}>${userOptions}</select>
+    <div id="userBalPreview" style="margin-top:4px; font-size:13px; padding:6px 10px; border-radius:8px; display:none;"></div>
+    <label>Lots Applied</label>
+    <input type="number" class="mono" id="f_lots" value="${app?app.lots:1}" min="1">
+    <div class="helptext" id="costPreview"></div>
+    ${app && app.allotted===true ? `
+      <label>Lots Actually Allotted</label>
+      <input type="number" class="mono" id="f_lotsAllotted" value="${app.lotsAllotted!=null?app.lotsAllotted:app.lots}" min="0" max="${app?app.lots:1}">
+      <div class="helptext">Defaults to all lots applied — update if only partially allotted (e.g. applied for 2, got 1).</div>
+    ` : `<div id="f_lotsAllotted_placeholder"></div>`}
+    <div class="helptext" style="margin-top:2px;">Commission: full cost from Account A, user earns % of profit. Assisted: both invest their own real stake (Aryan from A, user from B), each principal returns to its own account, profit split by commission % (not ratio). Shared: both invest, profit split by invested ratio.</div>
+
+    <div id="profitShareSection">
+      <label>Profit Sharing</label>
+      <div class="toggle-row" id="modeToggle">
+        <button type="button" class="toggle-btn ${initMode==='commission'?'active':''}" data-mode="commission" onclick="setProfitModeUI('commission')">Commission</button>
+        <button type="button" class="toggle-btn ${initMode==='assisted'?'active':''}" data-mode="assisted" onclick="setProfitModeUI('assisted')">Assisted</button>
+        <button type="button" class="toggle-btn ${initMode==='shared'?'active':''}" data-mode="shared" onclick="setProfitModeUI('shared')">Shared</button>
+      </div>
+
+      <div id="commissionFields">
+        <div class="helptext" style="margin-top:10px;">All profit belongs to Aryan. The user earns a commission % of the profit as their cut. Full applied cost is drawn from their Account A.</div>
+        <label>Commission % (of profit, goes to user)</label>
+        <input type="number" class="mono" id="f_comm" value="${app && app.commissionPercent!=null? app.commissionPercent : ''}" placeholder="Use user default">
+      </div>
+
+      <div id="assistedFields">
+        <div class="helptext" style="margin-top:10px;">Both invest their own real stake — Aryan's from Account A, user's from Account B — and each principal returns to its own account exactly as invested regardless of outcome. Only the PROFIT is split differently from Shared mode: by a flat commission %, not by the invested ratio.</div>
+        <div class="field-row">
+          <div><label>Aryan's Invested Amount (₹)</label><input type="number" class="mono" id="f_assistedAryanInv" value="${app && app.profitMode==='assisted'? (app.fundedByMe||0) : ''}" placeholder="0"></div>
+          <div><label>User's Invested Amount (₹) — Account B</label><input type="number" class="mono" id="f_userInv" value="${app && app.profitMode==='assisted'? (app.userInvested||0) : ''}" placeholder="0"></div>
+        </div>
+        <label>Commission % (of profit, goes to user's Account B)</label>
+        <input type="number" class="mono" id="f_comm_assisted" value="${app && app.commissionPercent!=null? app.commissionPercent : ''}" placeholder="Use user default">
+      </div>
+
+      <div id="sharedFields">
+        <div class="helptext" style="margin-top:10px;">Both invest. Profit is split automatically by each party's invested-amount ratio.</div>
+        <div class="field-row">
+          <div><label>Aryan's Invested Amount (₹)</label><input type="number" class="mono" id="f_aryanInv" value="${app && app.profitMode==='shared'? (app.fundedByMe||0) : ''}" placeholder="0"></div>
+          <div><label>User's Invested Amount (₹) — Account B</label><input type="number" class="mono" id="f_sharedUserInv" value="" placeholder="0"></div>
+        </div>
+        <label>Bonus to User Above Ratio Split (₹) — optional</label>
+        <input type="number" class="mono" id="f_bonus" value="${app && app.bonusToUser? app.bonusToUser : ''}" placeholder="0">
+        <div class="helptext">If Aryan wants to voluntarily give the user extra profit beyond their invested-ratio share, enter that amount here — it shifts from Aryan's share to the user's.</div>
+      </div>
+
+    </div>
+    <div class="helptext" id="selfNote" style="display:none;">Applying for yourself — the full amount is yours and all profit/loss is realized directly, no profit-sharing needed.</div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveApp('${appId||''}', '${ipoId}')">Save</button>
+    </div>
+  `);
+  let currentMode = initMode;
+  window._appModalMode = initMode; // expose to saveApp (let is closure-scoped, saveApp can't reach it)
+  const userSel = document.getElementById('f_user');
+  const lotsInput = document.getElementById('f_lots');
+  const shareSection = document.getElementById('profitShareSection');
+  const selfNote = document.getElementById('selfNote');
+  const commWrap = document.getElementById('commissionFields');
+  const assistedWrap = document.getElementById('assistedFields');
+  const sharedWrap = document.getElementById('sharedFields');
+  const aryanInvInput = document.getElementById('f_aryanInv');
+  const sharedUserInvInput = document.getElementById('f_sharedUserInv');
+  const assistedAryanInvInput = document.getElementById('f_assistedAryanInv');
+  const assistedUserInvInput = document.getElementById('f_userInv');
+  let lastEdited = 'aryan';
+  let assistedLastEdited = 'aryan';
+
+  const cost = () => (parseInt(lotsInput.value)||0) * (ipo.lotSize||0) * (ipo.pricePerShare||0);
+  const selectedIsMe = () => { const u = state.users.find(x=>x.id===userSel.value); return !!(u && u.isMe); };
+
+  window.setProfitModeUI = (mode)=>{
+    currentMode = mode;
+    window._appModalMode = mode;
+    document.querySelectorAll('#modeToggle .toggle-btn').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+    applyModeRules();
+    if(typeof updateBalPreview==='function') updateBalPreview();
+  };
+
+  const applyModeRules = ()=>{
+    const total = cost();
+    if(selectedIsMe()){
+      shareSection.style.display = 'none';
+      selfNote.style.display = '';
+      return;
+    }
+    shareSection.style.display = '';
+    selfNote.style.display = 'none';
+    commWrap.style.display = currentMode==='commission' ? '' : 'none';
+    assistedWrap.style.display = currentMode==='assisted' ? '' : 'none';
+    sharedWrap.style.display = currentMode==='shared' ? '' : 'none';
+    if(currentMode==='shared'){
+      if(aryanInvInput.value===''){ aryanInvInput.value = Math.round(total/2); }
+      if(sharedUserInvInput) sharedUserInvInput.value = clamp0(total - (parseFloat(aryanInvInput.value)||0));
+    } else if(currentMode==='assisted'){
+      if(assistedAryanInvInput.value===''){ assistedAryanInvInput.value = Math.round(total/2); }
+      if(assistedUserInvInput) assistedUserInvInput.value = clamp0(total - (parseFloat(assistedAryanInvInput.value)||0));
+    }
+  };
+
+  const updatePreview = ()=>{
+    const total = cost();
+    document.getElementById('costPreview').textContent = `Total applied amount: ${fmtMoney(total)} (${parseInt(lotsInput.value)||0} × ${ipo.lotSize||0} × ${fmtMoney(ipo.pricePerShare)})`;
+    if(currentMode==='shared' && !selectedIsMe()){
+      if(lastEdited==='user'){
+        aryanInvInput.value = clamp0(total - (parseFloat((sharedUserInvInput||{}).value)||0));
+      } else {
+        if(sharedUserInvInput) sharedUserInvInput.value = clamp0(total - (parseFloat(aryanInvInput.value)||0));
+      }
+    } else if(currentMode==='assisted' && !selectedIsMe()){
+      if(assistedLastEdited==='user'){
+        assistedAryanInvInput.value = clamp0(total - (parseFloat((assistedUserInvInput||{}).value)||0));
+      } else {
+        if(assistedUserInvInput) assistedUserInvInput.value = clamp0(total - (parseFloat(assistedAryanInvInput.value)||0));
+      }
+    }
+  };
+  const updateBalPreview = ()=>{
+    const el = document.getElementById('userBalPreview'); if(!el) return;
+    const uid = userSel.value;
+    const u = state.users.find(x=>x.id===uid);
+    if(!u){ el.style.display='none'; return; }
+    const excludeId = app ? app.id : null;
+    if(u.isMe){
+      const bal = myAccountBalance();
+      el.style.cssText = `margin-top:4px;font-size:13px;padding:6px 10px;border-radius:8px;background:rgba(74,222,128,0.07);color:var(--text-muted);display:block;`;
+      el.textContent = `Your tracked balance: ${fmtMoney(bal)}`;
+      return;
+    }
+    const total = cost();
+    const reqA = currentMode==='commission' ? total
+               : currentMode==='assisted' ? clamp0(parseFloat(assistedAryanInvInput.value)||0)
+               : clamp0(parseFloat(aryanInvInput.value)||0);
+    const reqB = currentMode==='shared' ? clamp0(total - clamp0(parseFloat((aryanInvInput||{}).value)||0))
+               : currentMode==='assisted' ? clamp0(parseFloat((assistedUserInvInput||{}).value)||0)
+               : 0;
+    const availA = accountABalance(uid, excludeId);
+    const availB = accountBBalance(uid, excludeId);
+    const okA = reqA<=0.005 || availA >= reqA-0.005;
+    const okB = reqB<=0.005 || availB >= reqB-0.005;
+    const ok = okA && okB;
+    el.style.cssText = `margin-top:4px;font-size:13px;padding:6px 10px;border-radius:8px;background:${ok?'rgba(74,222,128,0.1)':'rgba(248,113,113,0.12)'};color:${ok?'var(--profit)':'var(--loss)'};display:block;`;
+    let msg = `${ok?'✓':'⚠️'} ${u.name}'s Account A: ${fmtMoney(availA)}`;
+    if(reqA>0.005) msg += ` (needs ${fmtMoney(reqA)})`;
+    if(currentMode==='shared' || currentMode==='assisted'){
+      msg += ` · Account B: ${fmtMoney(availB)}`;
+      if(reqB>0.005) msg += ` (needs ${fmtMoney(reqB)})`;
+    }
+    if(!ok) msg += ' — insufficient, add funds first';
+    el.textContent = msg;
+  };
+  lotsInput.addEventListener('input', ()=>{ updatePreview(); updateBalPreview(); });
+  aryanInvInput.addEventListener('input', ()=>{
+    lastEdited = 'aryan';
+    const total = cost();
+    if(sharedUserInvInput) sharedUserInvInput.value = clamp0(total - (parseFloat(aryanInvInput.value)||0));
+    updateBalPreview();
+  });
+  if(sharedUserInvInput) sharedUserInvInput.addEventListener('input', ()=>{
+    lastEdited = 'user';
+    const total = cost();
+    aryanInvInput.value = clamp0(total - (parseFloat(sharedUserInvInput.value)||0));
+    updateBalPreview();
+  });
+  if(assistedAryanInvInput) assistedAryanInvInput.addEventListener('input', ()=>{
+    assistedLastEdited = 'aryan';
+    const total = cost();
+    if(assistedUserInvInput) assistedUserInvInput.value = clamp0(total - (parseFloat(assistedAryanInvInput.value)||0));
+    updateBalPreview();
+  });
+  if(assistedUserInvInput) assistedUserInvInput.addEventListener('input', ()=>{
+    assistedLastEdited = 'user';
+    const total = cost();
+    if(assistedAryanInvInput) assistedAryanInvInput.value = clamp0(total - (parseFloat(assistedUserInvInput.value)||0));
+    updateBalPreview();
+  });
+  userSel.addEventListener('change', ()=>{ applyModeRules(); updateBalPreview(); });
+  updateBalPreview();
+
+  // Pre-fill investment amounts on edit
+  if(app && app.profitMode==='shared'){
+    if(sharedUserInvInput) sharedUserInvInput.value = clamp0(totalCost(app, ipo) - (app.fundedByMe||0));
+  }
+  if(app && app.profitMode==='assisted'){
+    if(assistedUserInvInput) assistedUserInvInput.value = clamp0(totalCost(app, ipo) - (app.fundedByMe||0));
+  }
+
+  updatePreview();
+  applyModeRules();
+}
+function saveApp(appId, ipoId){
+  const ipo = state.ipos.find(i=>i.id===ipoId);
+  const userId = document.getElementById('f_user').value;
+  const user = state.users.find(u=>u.id===userId);
+  const lots = parseInt(document.getElementById('f_lots').value)||0;
+  if(!userId){ showToast('Select a user'); return; }
+  if(lots<=0){ showToast('Enter number of lots'); return; }
+  if(!ipo.lotSize || !ipo.pricePerShare){ showToast('Set the IPO price and lot size first'); return; }
+  const cost = lots * (ipo.lotSize||0) * (ipo.pricePerShare||0);
+
+  let funded, amountGiven, commission = null, profitMode = 'commission', bonusToUser = 0;
+  if(user && user.isMe){
+    funded = cost;
+    amountGiven = cost;
+  } else {
+    profitMode = (window._appModalMode) ? window._appModalMode : 'commission';
+    if(profitMode==='commission'){
+      funded = cost;
+      const commVal = document.getElementById('f_comm').value;
+      commission = commVal===''? null : parseFloat(commVal);
+      if(commission!=null && (isNaN(commission) || commission<0 || commission>100)){
+        showToast('Commission % must be between 0 and 100'); return;
+      }
+    } else if(profitMode==='assisted'){
+      // Assisted: like Shared, both invest their own real stake — Aryan's from Account A, user's
+      // from Account B — and each principal returns to its own account exactly as invested. Unlike
+      // Shared, PROFIT is split by a flat commission % instead of the invested-amount ratio.
+      funded = clamp0(parseFloat(document.getElementById('f_assistedAryanInv').value)||0);
+      if(funded > cost) funded = cost;
+      const commVal = document.getElementById('f_comm_assisted').value;
+      commission = commVal===''? null : parseFloat(commVal);
+      if(commission!=null && (isNaN(commission) || commission<0 || commission>100)){
+        showToast('Commission % must be between 0 and 100'); return;
+      }
+      // userInvested (= cost - funded, synced in the modal) is saved separately on the application object
+    } else {
+      funded = clamp0(parseFloat(document.getElementById('f_aryanInv').value)||0);
+      if(funded > cost) funded = cost;
+      bonusToUser = clamp0(parseFloat(document.getElementById('f_bonus').value)||0);
+    }
+    // "Amount Actually Given" (extra cash handed over beyond what was applied) was removed as a manual
+    // field — it kept auto-filling with the same value as `funded` in practice and was never actually
+    // used to record a genuinely different amount, so it was pure friction. amountGiven now always equals
+    // funded (extraGiven works out to 0 via computeApp's own clamp0(given-funded) — no behavior change for
+    // any existing record, since old records already stored amountGiven==fundedByMe in every real case).
+    amountGiven = funded;
+  }
+
+  // Balance check — new applicants always; edits only while the application is still pending (not yet
+  // allotted or marked not-allotted), since that's the only point real money is actively being committed.
+  // For a non-Aryan user this is now checked against their actual Account A / Account B wallet balances
+  // (Account A covers Aryan's share, Account B covers the user's own share in Shared Investment mode) —
+  // never allow an application to be added/kept if the relevant account(s) can't actually cover it.
+  const existingAppForCheck = appId ? state.applications.find(x=>x.id===appId) : null;
+  const isPendingEdit = !!existingAppForCheck && existingAppForCheck.allotted!==true && existingAppForCheck.allotted!==false;
+  if(!appId || isPendingEdit){
+    if(user && user.isMe){
+      // No balance check for Aryan — he manages funds physically and can apply even with a negative tracked balance.
+    } else if(user){
+      const excludeId = appId || null;
+      const reqA = (profitMode==='commission') ? cost : funded;
+      const reqB = (profitMode==='shared' || profitMode==='assisted') ? clamp0(cost - funded) : 0;
+      const availA = accountABalance(userId, excludeId);
+      const availB = accountBBalance(userId, excludeId);
+      if(reqA > 0.005 && reqA > availA + 0.005){
+        showToast(`⚠️ ${user.name}'s Account A balance (${fmtMoney(availA)}) can't cover Aryan's share (${fmtMoney(reqA)}). Transfer money into Account A first.`, 5500);
+        return;
+      }
+      if(reqB > 0.005 && reqB > availB + 0.005){
+        showToast(`⚠️ ${user.name}'s Account B balance (${fmtMoney(availB)}) can't cover their share (${fmtMoney(reqB)}). Add cash to Account B first.`, 5500);
+        return;
+      }
+    }
+  }
+
+  if(appId){
+    const a = state.applications.find(x=>x.id===appId);
+    const lotsAllottedEl = document.getElementById('f_lotsAllotted');
+    let lotsAllotted = lotsAllottedEl ? (parseInt(lotsAllottedEl.value)||null) : a.lotsAllotted;
+    if(lotsAllotted!=null){
+      if(lotsAllotted<0) lotsAllotted = 0;
+      if(lotsAllotted>lots) lotsAllotted = lots; // can't allot more than what was applied for
+    }
+    const userInvested = profitMode==='assisted' ? clamp0(cost - funded) : undefined;
+    Object.assign(a, {lots, fundedByMe:funded, amountGiven, commissionPercent:commission, profitMode, bonusToUser, fundingSource:undefined, lotsAllotted,
+      sharedSplitBy:undefined,
+      ...(profitMode==='assisted' ? {userInvested} : {userInvested:undefined})});
+  } else {
+    const userInvested = profitMode==='assisted' ? clamp0(cost - funded) : undefined;
+    state.applications.push({id:uid(), ipoId, userId, lots, fundedByMe:funded, amountGiven, allotted:null, lotsAllotted:null, sellPrice:null,
+      commissionPercent:commission, profitMode, bonusToUser,
+      ...(profitMode==='assisted' ? {userInvested} : {})});
+  }
+  saveState(); closeModal(); render(); showToast('Applicant saved');
+}
+function openSellModal(appId, ipo){
+  const a = state.applications.find(x=>x.id===appId);
+  openModal(`
+    <div class="modal-title">Sell Price — ${esc(ipo.name)}</div>
+    <label>Actual Sell Price per Share</label>
+    <input type="number" class="mono" id="f_sell" value="${ipo.listingPrice!=null?ipo.listingPrice:''}" placeholder="0">
+    <div class="helptext">Defaults to the IPO listing price — edit if this applicant sold at a different price.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSellPrice('${appId}')">Save & Settle</button>
+    </div>
+  `);
+}
+function saveSellPrice(appId){
+  const v = parseFloat(document.getElementById('f_sell').value);
+  if(isNaN(v)){ showToast('Enter a valid sell price'); return; }
+  if(v<0){ showToast('Sell price cannot be negative'); return; }
+  const a = state.applications.find(x=>x.id===appId);
+  a.sellPrice = v;
+  saveState(); closeModal(); render(); showToast('Settled — profit calculated');
+}
+
+/* --- User modal --- */
+function openUserModal(userId){
+  const u = userId ? state.users.find(x=>x.id===userId) : null;
+  openModal(`
+    <div class="modal-title">${u?'Edit User':'Add User'}</div>
+    <label>Name</label>
+    <input type="text" id="f_uname" value="${u?esc(u.name):''}" placeholder="Friend's name" ${u&&u.isMe?'disabled':''}>
+    ${!(u&&u.isMe) ? `
+      <label>Default Commission % (on profit, when you fully fund their application)</label>
+      <input type="number" class="mono" id="f_ucomm" value="${u&&u.defaultCommission!=null?u.defaultCommission:25}">
+    ` : ''}
+    <label>Opening Balance (₹)${u&&u.isMe? ' — starting profit/cash you had before using this app' : ' — what they already owed you before using this app (negative if you owed them)'}</label>
+    <input type="number" class="mono" id="f_uopen" value="${u&&u.openingBalance!=null?u.openingBalance:0}">
+    <div class="divider" style="margin:18px 0 4px;"></div>
+    <div style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:10px; font-weight:600;">Demat / Broker Info</div>
+    <div class="field-row">
+      <div>
+        <label>PAN Number</label>
+        <input type="text" class="mono" id="f_upan" value="${u&&u.pan?esc(u.pan):''}" placeholder="ABCDE1234F" maxlength="10" style="text-transform:uppercase;">
+      </div>
+      <div>
+        <label>TPIN</label>
+        <input type="text" class="mono" id="f_utpin" value="${u&&u.tpin?esc(u.tpin):''}" placeholder="••••••" maxlength="6">
+      </div>
+    </div>
+    <div class="helptext">Stored locally only. Never shared or transmitted.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser('${userId||''}')">Save</button>
+    </div>
+    ${u&&!u.isMe? `<button class="btn btn-danger" style="margin-top:10px;" onclick="deleteUser('${userId}')">Delete User</button>`:''}
+  `);
+}
+function saveUser(userId){
+  const name = document.getElementById('f_uname').value.trim();
+  const commEl = document.getElementById('f_ucomm');
+  const comm = commEl ? parseFloat(commEl.value) : null;
+  const opening = parseFloat(document.getElementById('f_uopen').value)||0;
+  const pan = (document.getElementById('f_upan').value||'').trim().toUpperCase() || null;
+  const tpin = (document.getElementById('f_utpin').value||'').trim() || null;
+  if(!name){ showToast('Enter a name'); return; }
+  if(pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)){ showToast('PAN format: ABCDE1234F'); return; }
+  if(userId){
+    const u = state.users.find(x=>x.id===userId);
+    if(!u.isMe){ u.name = name; u.defaultCommission = isNaN(comm)?25:comm; }
+    u.openingBalance = opening;
+    u.pan = pan; u.tpin = tpin;
+  } else {
+    state.users.push({id:uid(), name, isMe:false, defaultCommission:isNaN(comm)?25:comm, openingBalance:opening, pan, tpin});
+  }
+  saveState(); closeModal(); render(); showToast('User saved');
+}
+function deleteUser(userId){
+  const bal = userBalance(userId);
+  let msg = 'Delete this user? Their applications and transfers will also be removed.';
+  if(Math.abs(bal.net) > 0.5){
+    msg = bal.net>0
+      ? `${state.users.find(u=>u.id===userId)?.name||'This user'} still owes you ${fmtMoney(bal.net)}. Deleting removes that record permanently. Continue?`
+      : `You still owe ${state.users.find(u=>u.id===userId)?.name||'this user'} ${fmtMoney(-bal.net)}. Deleting removes that record permanently. Continue?`;
+  }
+  confirmAction(msg, ()=>{
+    state.users = state.users.filter(u=>u.id!==userId);
+    state.applications = state.applications.filter(a=>a.userId!==userId);
+    state.transactions = state.transactions.filter(t=>t.fromUserId!==userId && t.toUserId!==userId);
+    state.withdrawals = (state.withdrawals||[]).filter(w=>w.userId!==userId);
+    state.deposits = (state.deposits||[]).filter(d=>d.userId!==userId);
+    saveState(); closeModal(); userDetailId=null; render(); showToast('User deleted');
+  });
+}
+
+/* --- Transaction modal (flexible: any user -> any user) --- */
+function openTxnModal(defaultToUserId, txnId, prefill){
+  const existing = txnId ? state.transactions.find(t=>t.id===txnId) : null;
+  editingTxnId = txnId || null;
+  const me = state.users.find(u=>u.isMe);
+  let fromId, toId, amount = '', date = todayISO(), note = '';
+  if(existing){ fromId=existing.fromUserId; toId=existing.toUserId; amount=existing.amount; date=existing.date; note=existing.note||''; }
+  else if(prefill){ fromId=prefill.fromUserId; toId=prefill.toUserId; amount=prefill.amount; note=prefill.note||''; }
+  else { fromId = me?me.id:''; toId = defaultToUserId || ''; }
+
+  const opts = (selId) => state.users.map(u=>`<option value="${u.id}" ${u.id===selId?'selected':''}>${esc(u.name)}${u.isMe?' (You)':''}</option>`).join('');
+  const existingFromAccount = existing ? (existing.fromAccount||'A') : 'A';
+
+  openModal(`
+    <div class="modal-title">${existing? 'Edit Transfer' : 'Log Money Transfer'}</div>
+    <div class="helptext" style="margin:0 0 12px;">Use this only for cash movement outside an IPO application — advances, repayments, or settle-ups. Money you fund into an applicant's IPO is already tracked automatically from the Applicant screen.</div>
+    <div class="field-row">
+      <div><label>From</label><select id="f_from">${opts(fromId)}</select></div>
+      <div><label>To</label><select id="f_to">${opts(toId)}</select></div>
+    </div>
+    <div id="fromAccountRow" style="margin-top:9px; display:none;">
+      <label>From Account</label>
+      <select id="f_fromAccount">
+        <option value="A" ${existingFromAccount==='A'?'selected':''}>Account A (Aryan's money)</option>
+        <option value="B" ${existingFromAccount==='B'?'selected':''}>Account B (their own money)</option>
+      </select>
+    </div>
+    <div id="toAccountNote" class="helptext" style="margin-top:4px;"></div>
+    <button class="btn btn-ghost btn-sm" style="width:auto; margin-top:9px;" onclick="swapFromTo()">⇅ Swap From / To</button>
+    <label>Amount (₹)</label>
+    <input type="number" class="mono" id="f_tamt" value="${amount}" placeholder="0">
+    <label>Date</label>
+    <input type="date" id="f_tdate" value="${date}">
+    <label>Note (optional)</label>
+    <input type="text" id="f_tnote" value="${esc(note)}" placeholder="e.g. Advance for next IPO">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTxn()">Save</button>
+    </div>
+    ${existing? `<button class="btn btn-danger" style="margin-top:10px;" onclick="deleteTxn('${existing.id}')">Delete Transfer</button>`:''}
+  `);
+
+  const fromSel = document.getElementById('f_from');
+  const toSel = document.getElementById('f_to');
+  const fromAcctRow = document.getElementById('fromAccountRow');
+  const fromAcctSel = document.getElementById('f_fromAccount');
+  const toAcctNote = document.getElementById('toAccountNote');
+  const updateAccountUI = ()=>{
+    const fu = state.users.find(x=>x.id===fromSel.value);
+    const tu = state.users.find(x=>x.id===toSel.value);
+    if(fu && !fu.isMe){
+      fromAcctRow.style.display = '';
+      if(tu && tu.isMe){ fromAcctSel.value = 'A'; fromAcctSel.disabled = true; }
+      else fromAcctSel.disabled = false;
+    } else {
+      fromAcctRow.style.display = 'none';
+    }
+    if(tu && !tu.isMe){
+      const toAcct = (fu && fu.isMe) ? 'A' : 'B';
+      toAcctNote.textContent = `Will be credited to ${esc(tu.name)}'s Account ${toAcct}${toAcct==='A'?' (money from Aryan)':" (treated as their own money)"}.`;
+    } else {
+      toAcctNote.textContent = (fu && !fu.isMe) ? 'Transfers to Aryan are always pulled from the sender\'s Account A.' : '';
+    }
+  };
+  fromSel.addEventListener('change', updateAccountUI);
+  toSel.addEventListener('change', updateAccountUI);
+  window._txnUpdateAccountUI = updateAccountUI;
+  updateAccountUI();
+}
+function swapFromTo(){
+  const f = document.getElementById('f_from'), t = document.getElementById('f_to');
+  const tmp = f.value; f.value = t.value; t.value = tmp;
+  if(typeof window._txnUpdateAccountUI==='function') window._txnUpdateAccountUI();
+}
+function saveTxn(){
+  const fromUserId = document.getElementById('f_from').value;
+  const toUserId = document.getElementById('f_to').value;
+  const amount = parseFloat(document.getElementById('f_tamt').value)||0;
+  const date = document.getElementById('f_tdate').value || todayISO();
+  const note = document.getElementById('f_tnote').value.trim();
+  if(!fromUserId || !toUserId){ showToast('Select both users'); return; }
+  if(fromUserId===toUserId){ showToast('From and To must be different'); return; }
+  if(amount<=0){ showToast('Enter an amount'); return; }
+  const fromUser = state.users.find(u=>u.id===fromUserId);
+  const toUser = state.users.find(u=>u.id===toUserId);
+  // Every transaction touching a non-Aryan user is tagged with which of their two accounts it moves —
+  // Aryan → user always credits Account A; a transfer to Aryan can only be debited from Account A;
+  // any other sender's account is whatever they picked (defaults to Account A).
+  let fromAccount = null, toAccount = null;
+  if(fromUser && !fromUser.isMe){
+    const sel = document.getElementById('f_fromAccount');
+    fromAccount = sel ? sel.value : 'A';
+    if(toUser && toUser.isMe) fromAccount = 'A';
+  }
+  if(toUser && !toUser.isMe){
+    toAccount = (fromUser && fromUser.isMe) ? 'A' : 'B';
+  }
+  if(editingTxnId){
+    const t = state.transactions.find(x=>x.id===editingTxnId);
+    Object.assign(t, {fromUserId, toUserId, amount, date, note, fromAccount, toAccount});
+  } else {
+    state.transactions.push({id:uid(), fromUserId, toUserId, amount, date, note, fromAccount, toAccount});
+  }
+  editingTxnId = null;
+  saveState(); closeModal(); render(); showToast('Transfer saved');
+}
+function deleteTxn(txnId){
+  state.transactions = state.transactions.filter(t=>t.id!==txnId);
+  editingTxnId = null;
+  saveState(); closeModal(); render(); showToast('Transfer deleted');
+}
+
+/* ============================= MOVE BETWEEN MY OWN ACCOUNTS (A <-> B) ============================= */
+// Internal move for a single non-Aryan user: same user on both sides of a transaction, just tagged with
+// different fromAccount/toAccount. transfersNetAccount() already handles this correctly (it debits the
+// account matching fromAccount and credits the one matching toAccount independently), and the overall
+// transfersNet() for the user nets to zero since it's their own money moving between their two pockets.
+function openMoveModal(userId){
+  const u = state.users.find(x=>x.id===userId); if(!u || u.isMe) return;
+  const availA = accountABalance(userId), availB = accountBBalance(userId);
+  openModal(`
+    <div class="modal-title">Move Between ${esc(u.name)}'s Accounts</div>
+    <div class="helptext" style="margin:0 0 12px;">Account A: ${fmtMoney(availA)} · Account B: ${fmtMoney(availB)}</div>
+    <label>Direction</label>
+    <select id="f_moveDir">
+      <option value="AtoB">Account A → Account B</option>
+      <option value="BtoA">Account B → Account A</option>
+    </select>
+    <label>Amount (₹)</label>
+    <input type="number" class="mono" id="f_moveAmt" value="" placeholder="0">
+    <label>Date</label>
+    <input type="date" id="f_moveDate" value="${todayISO()}">
+    <label>Note (optional)</label>
+    <input type="text" id="f_moveNote" value="" placeholder="e.g. Moving profit to own funds">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMove('${userId}')">Save</button>
+    </div>
+  `);
+}
+function saveMove(userId){
+  const dir = document.getElementById('f_moveDir').value;
+  const amount = parseFloat(document.getElementById('f_moveAmt').value)||0;
+  const date = document.getElementById('f_moveDate').value || todayISO();
+  const note = document.getElementById('f_moveNote').value.trim();
+  if(amount<=0){ showToast('Enter an amount'); return; }
+  const fromAccount = dir==='AtoB' ? 'A' : 'B';
+  const toAccount = dir==='AtoB' ? 'B' : 'A';
+  const avail = fromAccount==='A' ? accountABalance(userId) : accountBBalance(userId);
+  if(amount > avail + 0.005){
+    showToast(`⚠️ Account ${fromAccount} only has ${fmtMoney(avail)} available.`, 5000);
+    return;
+  }
+  state.transactions.push({id:uid(), fromUserId:userId, toUserId:userId, amount, date, note, fromAccount, toAccount, internal:true});
+  saveState(); closeModal(); render(); showToast('Moved between accounts');
+}
+
+/* ============================= WITHDRAW TO CASH ============================= */
+let editingWithdrawId = null;
+function openWithdrawModal(userId, withdrawId){
+  const user = state.users.find(u=>u.id===userId); if(!user) return;
+  const existing = withdrawId ? (state.withdrawals||[]).find(w=>w.id===withdrawId) : null;
+  editingWithdrawId = withdrawId || null;
+  const existingAccount = existing ? (existing.account||'A') : 'A';
+  const amount = existing ? existing.amount : '';
+  const date = existing ? existing.date : todayISO();
+  const note = existing ? (existing.note||'') : '';
+  const acctPicker = !user.isMe ? `
+    <label>From Account</label>
+    <select id="f_wacct" onchange="updateWithdrawBalPreview('${userId}')">
+      <option value="A" ${existingAccount==='A'?'selected':''}>Account A (Aryan's money)</option>
+      <option value="B" ${existingAccount==='B'?'selected':''}>Account B (their own money)</option>
+    </select>
+  ` : '';
+  openModal(`
+    <div class="modal-title">${existing? 'Edit Withdrawal' : 'Withdraw to Cash'}</div>
+    <div class="helptext" style="margin:0 0 12px;">Record money ${user.isMe?'you':esc(user.name)} took out of the tracked account as physical cash. This reduces ${user.isMe?'your':esc(user.name)+"'s"} account balance and does not move money to anyone else.</div>
+    ${acctPicker}
+    <div class="stat" id="f_wbalStat" style="margin:14px 0;"><div class="label">Current Balance</div><div class="value" id="f_wbalVal"></div></div>
+    <label>Amount (₹)</label>
+    <input type="number" class="mono" id="f_wamt" value="${amount}" placeholder="0">
+    <label>Date</label>
+    <input type="date" id="f_wdate" value="${date}">
+    <label>Note (optional)</label>
+    <input type="text" id="f_wnote" value="${esc(note)}" placeholder="e.g. Cash for personal use">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWithdraw('${userId}')">Save</button>
+    </div>
+    ${existing? `<button class="btn btn-danger" style="margin-top:10px;" onclick="deleteWithdraw('${existing.id}')">Delete Withdrawal</button>`:''}
+  `);
+  updateWithdrawBalPreview(userId);
+}
+function updateWithdrawBalPreview(userId){
+  const user = state.users.find(u=>u.id===userId); if(!user) return;
+  const valEl = document.getElementById('f_wbalVal'); if(!valEl) return;
+  let bal;
+  if(user.isMe) bal = myAccountBalance();
+  else {
+    const acctSel = document.getElementById('f_wacct');
+    const acct = acctSel ? acctSel.value : 'A';
+    bal = acct==='A' ? accountABalance(userId) : accountBBalance(userId);
+  }
+  valEl.textContent = fmtMoney(bal);
+  valEl.className = `value ${bal>=0?'gold':'loss'}`;
+}
+function saveWithdraw(userId){
+  const user = state.users.find(u=>u.id===userId);
+  const amount = parseFloat(document.getElementById('f_wamt').value)||0;
+  const date = document.getElementById('f_wdate').value || todayISO();
+  const note = document.getElementById('f_wnote').value.trim();
+  if(amount<=0){ showToast('Enter an amount'); return; }
+  const acctSel = document.getElementById('f_wacct');
+  const account = (user && !user.isMe) ? (acctSel?acctSel.value:'A') : null;
+  if(user && !user.isMe){
+    const avail = account==='A' ? accountABalance(userId) : accountBBalance(userId);
+    if(amount > avail + 0.005){
+      showToast(`⚠️ Account ${account} only has ${fmtMoney(avail)} available.`, 5000);
+      return;
+    }
+  }
+  if(!Array.isArray(state.withdrawals)) state.withdrawals = [];
+  if(editingWithdrawId){
+    const w = state.withdrawals.find(x=>x.id===editingWithdrawId);
+    Object.assign(w, {amount, date, note, account});
+  } else {
+    state.withdrawals.push({id:uid(), userId, amount, date, note, account});
+  }
+  editingWithdrawId = null;
+  saveState(); closeModal(); render(); showToast('Withdrawal saved');
+}
+function deleteWithdraw(withdrawId){
+  state.withdrawals = (state.withdrawals||[]).filter(w=>w.id!==withdrawId);
+  editingWithdrawId = null;
+  saveState(); closeModal(); render(); showToast('Withdrawal deleted');
+}
+
+/* ============================= ADD CASH TO ACCOUNT ============================= */
+// Available for every user now, not just Aryan. For Aryan (isMe) this tops up his single liquid account.
+// For any other user it always credits Account B — this is exactly the "add via cash" feature for their
+// own money, distinct from Account A which can only ever be funded by a transfer from Aryan.
+let editingDepositId = null;
+function openDepositModal(userId, depositId){
+  const user = state.users.find(u=>u.id===userId); if(!user) return;
+  const existing = depositId ? (state.deposits||[]).find(d=>d.id===depositId) : null;
+  editingDepositId = depositId || null;
+  const bal = user.isMe ? myAccountBalance() : accountBBalance(userId);
+  const amount = existing ? existing.amount : '';
+  const date = existing ? existing.date : todayISO();
+  const note = existing ? (existing.note||'') : '';
+  openModal(`
+    <div class="modal-title">${existing? 'Edit Deposit' : 'Add Cash to Account'}</div>
+    <div class="helptext" style="margin:0 0 12px;">Record cash ${user.isMe?"you're adding into your own tracked account":esc(user.name)+" is adding into their own Account B"} (e.g. topping up from bank or wallet). ${user.isMe? 'Increases your account balance' : "Increases their Account B balance"} and isn't linked to any IPO.</div>
+    <div class="stat" style="margin-bottom:14px;"><div class="label">Current Balance</div><div class="value ${bal>=0?'gold':'loss'}">${fmtMoney(bal)}</div></div>
+    <label>Amount (₹)</label>
+    <input type="number" class="mono" id="f_damt" value="${amount}" placeholder="0">
+    <label>Date</label>
+    <input type="date" id="f_ddate" value="${date}">
+    <label>Note (optional)</label>
+    <input type="text" id="f_dnote" value="${esc(note)}" placeholder="e.g. Top-up from bank">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDeposit('${userId}')">Save</button>
+    </div>
+    ${existing? `<button class="btn btn-danger" style="margin-top:10px;" onclick="deleteDeposit('${existing.id}')">Delete Deposit</button>`:''}
+  `);
+}
+function saveDeposit(userId){
+  const amount = parseFloat(document.getElementById('f_damt').value)||0;
+  const date = document.getElementById('f_ddate').value || todayISO();
+  const note = document.getElementById('f_dnote').value.trim();
+  if(amount<=0){ showToast('Enter an amount'); return; }
+  if(!Array.isArray(state.deposits)) state.deposits = [];
+  if(editingDepositId){
+    const d = state.deposits.find(x=>x.id===editingDepositId);
+    Object.assign(d, {amount, date, note});
+  } else {
+    state.deposits.push({id:uid(), userId, amount, date, note});
+  }
+  editingDepositId = null;
+  saveState(); closeModal(); render(); showToast('Deposit saved');
+}
+function deleteDeposit(depositId){
+  state.deposits = (state.deposits||[]).filter(d=>d.id!==depositId);
+  editingDepositId = null;
+  saveState(); closeModal(); render(); showToast('Deposit deleted');
+}
+
+/* ============================= INIT ============================= */
+loadState();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
